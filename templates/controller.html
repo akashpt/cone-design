@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Texa | COPS - Controller</title>
+
+    <link rel="stylesheet" href="../static/css/all.min.css" />
+    <link rel="stylesheet" href="../static/css/style.css" />
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+
+    <style>
+      :root {
+        --font-sans: "Inter", sans-serif;
+        --primary: #722f37;
+        --primary-d: #5a242c;
+        --primary-l: #9a5a62;
+        --primary-xl: #f8f0f1;
+        --bg: #f0f2f4;
+        --card: #ffffff;
+        --text: #1a1f2e;
+        --muted: #6b7280;
+        --border: #e2e6ea;
+        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+      }
+
+      body {
+        background: var(--bg);
+        font-family: var(--font-sans);
+        color: var(--text);
+        margin: 0;
+      }
+
+      .camera-settings {
+        padding: 28px;
+        background: var(--card);
+        border-radius: 16px;
+        margin: 32px;
+        box-shadow: var(--shadow-sm);
+        height: fit-content;
+        width: 100%;
+      }
+      .camera-settings-flex {
+        display: flex;
+
+        justify-content: space-between;
+      }
+      h3 {
+        margin: 0 0 24px 0;
+        color: var(--primary);
+        font-size: 1.4rem;
+        font-weight: 600;
+      }
+
+      .field {
+        margin-bottom: 28px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: var(--text);
+        font-size: 0.98rem;
+      }
+
+      /* ─── Custom Searchable Dropdown ─── */
+      .custom-select-container {
+        position: relative;
+      }
+
+      .search-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        font-size: 1rem;
+        background: white;
+        transition: all 0.15s ease;
+      }
+
+      .search-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(114, 47, 55, 0.14);
+      }
+
+      .options-list {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 260px;
+        overflow-y: auto;
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        margin-top: 6px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        z-index: 20;
+        display: none;
+      }
+
+      .options-list.show {
+        display: block;
+      }
+
+      .option {
+        padding: 12px 16px;
+        cursor: pointer;
+        font-size: 0.97rem;
+        color: var(--text);
+        transition: background 0.12s;
+      }
+
+      .option:hover,
+      .option.selected {
+        background: var(--primary-xl);
+        color: var(--primary);
+      }
+
+      .field-label {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--text);
+        margin-bottom: 12px;
+      }
+
+      /* ── Exposure Row ── */
+      .ev-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      /* ── Stepper buttons ── */
+      .ev-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 1.5px solid var(--border);
+        background: white;
+        color: var(--text);
+        font-size: 1.15rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition:
+          border-color 0.15s,
+          background 0.15s,
+          color 0.15s;
+        line-height: 1;
+        user-select: none;
+      }
+
+      .ev-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: var(--primary-xl);
+      }
+
+      .ev-btn:active {
+        transform: scale(0.93);
+      }
+
+      /* ── Slider ── */
+      .ev-slider-wrap {
+        flex: 1;
+        position: relative;
+      }
+
+      .ev-slider {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 6px;
+        border-radius: 999px;
+        outline: none;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+
+      .ev-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: white;
+        border: 2.5px solid var(--primary);
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.15);
+        cursor: pointer;
+        transition:
+          transform 0.15s,
+          box-shadow 0.15s;
+      }
+
+      .ev-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.1);
+        box-shadow: 0 2px 10px rgba(114, 47, 55, 0.25);
+      }
+
+      .ev-slider::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: white;
+        border: 2.5px solid var(--primary);
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.15);
+        cursor: pointer;
+      }
+
+      /* ── Type input ── */
+      .ev-input {
+        width: 72px;
+        height: 36px;
+        border: 1.5px solid var(--border);
+        border-radius: 8px;
+        text-align: center;
+        font-size: 0.95rem;
+        font-weight: 600;
+        font-family: monospace;
+        color: var(--text);
+        background: white;
+        outline: none;
+        flex-shrink: 0;
+        transition:
+          border-color 0.15s,
+          box-shadow 0.15s;
+      }
+
+      .ev-input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(114, 47, 55, 0.1);
+      }
+
+      /* ── Scale ticks below slider ── */
+      .ev-scale {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 6px;
+        padding: 0 1px;
+      }
+
+      .ev-scale span {
+        font-size: 0.72rem;
+        color: var(--muted);
+        font-family: monospace;
+      }
+
+      .ev-scale span.center {
+        font-weight: 600;
+        color: var(--primary);
+      }
+
+      /* ── Help text ── */
+      .help {
+        font-size: 0.8rem;
+        color: var(--muted);
+        margin-top: 10px;
+      }
+      .save_btn {
+        border: 1px solid var(--primary);
+        background: var(--primary);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      .save_btn:hover {
+       
+        background: var(--bg);
+        color: var(--primary);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loader, sidebar, header, toast remain the same -->
+
+    <div id="loaderDots" class="dots-loader">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+
+    <aside>
+      <div class="logo-area">
+        <div class="logo_div">
+          <a href="index.html">
+            <img src="../static/img/logo.png" alt="Logo" />
+          </a>
+        </div>
+      </div>
+      <div class="menu-section">
+        <div class="menu-label">Navigation</div>
+        <a href="index.html"  onclick="bridge.goHome()">
+          <div class="menu-item"><i class="fa-solid fa-house"></i> HOME</div>
+        </a>
+        <!-- <a href="report.html"  onclick="bridge.goReport()"> -->
+          <div class="menu-item">
+            <i class="fa-solid fa-chart-simple"></i> REPORT
+          </div>
+        </a>
+        <div class="menu-item active" onclick="bridge.goController()">
+          <i class="fa-solid fa-sliders"></i> CONTROLLER
+        </div>
+        <a href="training.html"  onclick="bridge.goTraining()">
+          <div class="menu-item ">
+            <i class="fa-solid fa-microchip"></i> TRAINING
+          </div>
+        </a>
+        <div class="menu-label" style="margin-top: 4px">System</div>
+        <div class="menu-item"><i class="fa-solid fa-gear"></i> SETTINGS</div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="signal-block">
+          <div class="signal-label">COPS Count</div>
+          <div class="signal-value">
+            <span class="signal-dot"></span><span id="signalCount">244</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+    <main>
+      <header>
+        <div class="header-left">
+          <span class="breadcrumb">COPS Inspection</span>
+          <span class="header-badge">YARN INSPECTION</span>
+        </div>
+        <div id="statusPill" class="status-pill waiting">
+          <span class="status-dot"></span>
+          <span id="statusText">WAITING</span>
+        </div>
+        <div class="header-right">
+          <span id="liveTime">--/--/---- — --:--:--</span>
+          <div class="header-user">
+            <i
+              class="fa-solid fa-user"
+              style="opacity: 0.8; font-size: 0.68rem"
+            ></i>
+          </div>
+        </div>
+      </header>
+
+      <div class="content" style="padding: 32px 24px">
+        <div class="camera-settings">
+          <div class="camera-settings-flex">
+            <div>
+              <h3>Camera Setup</h3>
+
+              <div class="field">
+                <label>Select Camera</label>
+                <div class="custom-select-container">
+                  <input
+                    type="text"
+                    id="cameraSearch"
+                    class="search-input"
+                    placeholder="Search or select camera…"
+                    autocomplete="off"
+                  />
+                  <div id="cameraOptions" class="options-list"></div>
+                  <input type="hidden" id="cameraValue" />
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3>Exposure Compensation</h3>
+
+              <div class="ev-row">
+                <button class="ev-btn" id="evMinus" title="Decrease">−</button>
+
+                <div class="ev-slider-wrap">
+                  <input
+                    type="range"
+                    class="ev-slider"
+                    id="evSlider"
+                    min="-2.0"
+                    max="2.0"
+                    step="0.1"
+                    value="0.0"
+                  />
+                  <div class="ev-scale">
+                    <span>−2</span>
+                    <span>−1</span>
+                    <span class="center">0</span>
+                    <span>+1</span>
+                    <span>+2</span>
+                  </div>
+                </div>
+
+                <button class="ev-btn" id="evPlus" title="Increase">+</button>
+
+                <input
+                  type="text"
+                  class="ev-input"
+                  id="evInput"
+                  value="0.0"
+                  maxlength="5"
+                />
+              </div>
+
+              <div class="help">
+                Range: −2.0 to +2.0 EV &nbsp;·&nbsp; Step: 0.1 &nbsp;·&nbsp;
+                Type a value or drag the slider
+              </div>
+            </div>
+          </div>
+          <div>
+            <button class="save_btn" id="saveSettingsBtn">Save Settings</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <div class="toast" id="toast">
+      <i class="fa-solid fa-circle-check"></i>
+      <span id="toastMsg">Done.</span>
+    </div>
+
+    <script src="../static/script/controller.js"></script>
+
+
+    <script>
+      // ─── Dynamic Exposure Slider ───
+
+      // ─── Searchable Camera Dropdown ───
+      const cameras = [
+        { value: "0", label: "Camera 1 – Main USB / Built-in" },
+        { value: "1", label: "Camera 2 – USB PTZ" },
+        { value: "2", label: "Camera 3 – IP Camera (RTSP)" },
+        { value: "3", label: "Camera 4 – HDMI Capture Card" },
+        { value: "4", label: "Camera 5 – GigE Industrial" },
+        { value: "5", label: "Camera 6 – Basler USB3" },
+      ];
+
+      const searchInput = document.getElementById("cameraSearch");
+      const optionsList = document.getElementById("cameraOptions");
+      const hiddenInput = document.getElementById("cameraValue");
+
+      function renderOptions(filter = "") {
+        optionsList.innerHTML = "";
+        const filtered = cameras.filter((c) =>
+          c.label.toLowerCase().includes(filter.toLowerCase()),
+        );
+
+        if (filtered.length === 0) {
+          const item = document.createElement("div");
+          item.className = "option";
+          item.textContent = "No matching cameras";
+          item.style.color = "var(--muted)";
+          item.style.cursor = "default";
+          optionsList.appendChild(item);
+          return;
+        }
+
+        filtered.forEach((cam) => {
+          const item = document.createElement("div");
+          item.className = "option";
+          item.textContent = cam.label;
+          item.dataset.value = cam.value;
+
+          item.addEventListener("click", () => {
+            searchInput.value = cam.label;
+            hiddenInput.value = cam.value;
+            optionsList.classList.remove("show");
+            // bridge.selectCamera?.(cam.value);   // ← connect to Qt if needed
+          });
+
+          optionsList.appendChild(item);
+        });
+      }
+
+      searchInput.addEventListener("focus", () => {
+        optionsList.classList.add("show");
+        renderOptions(searchInput.value);
+      });
+
+      searchInput.addEventListener("input", () => {
+        renderOptions(searchInput.value);
+        optionsList.classList.add("show");
+      });
+
+      document.addEventListener("click", (e) => {
+        if (
+          !searchInput.contains(e.target) &&
+          !optionsList.contains(e.target)
+        ) {
+          optionsList.classList.remove("show");
+        }
+      });
+
+      // initial render
+      renderOptions();
+    </script>
+
+    <script>
+      const slider = document.getElementById("evSlider");
+      const input = document.getElementById("evInput");
+      const btnMinus = document.getElementById("evMinus");
+      const btnPlus = document.getElementById("evPlus");
+
+      const MIN = -2.0,
+        MAX = 2.0,
+        STEP = 0.1;
+
+      function clamp(v) {
+        return Math.round(Math.max(MIN, Math.min(MAX, v)) * 10) / 10;
+      }
+
+      function applyColor(val) {
+        const pct = ((val - MIN) / (MAX - MIN)) * 100;
+        let trackColor, thumbColor;
+
+        if (val < 0) {
+          trackColor = `linear-gradient(to right, #fee2e2 0%, #ef4444 ${pct}%, #e2e6ea ${pct}%)`;
+          thumbColor = "#ef4444";
+        } else if (val > 0) {
+          const zeroPct = 50;
+          trackColor = `linear-gradient(to right, #e2e6ea 0%, #e2e6ea ${zeroPct}%, #3b82f6 ${zeroPct}%, #93c5fd ${pct}%, #e2e6ea ${pct}%)`;
+          thumbColor = "#3b82f6";
+        } else {
+          trackColor = "#e2e6ea";
+          thumbColor = "var(--primary)";
+        }
+
+        slider.style.background = trackColor;
+        slider.style.setProperty("--thumb-color", thumbColor);
+
+        // Apply thumb color via border override
+        document.documentElement.style.setProperty("--thumb-c", thumbColor);
+        slider.style.borderColor = thumbColor;
+
+        // Recolor thumb dynamically
+        const style =
+          document.getElementById("dynThumb") ||
+          (() => {
+            const s = document.createElement("style");
+            s.id = "dynThumb";
+            document.head.appendChild(s);
+            return s;
+          })();
+        style.textContent = `
+      #evSlider::-webkit-slider-thumb { border-color: ${thumbColor}; }
+      #evSlider::-moz-range-thumb     { border-color: ${thumbColor}; }
+    `;
+
+        // Input color
+        input.style.color =
+          val < 0 ? "#ef4444" : val > 0 ? "#3b82f6" : "var(--text)";
+        input.style.borderColor =
+          val !== 0 ? (val < 0 ? "#fca5a5" : "#93c5fd") : "var(--border)";
+      }
+
+      function update(val, source) {
+        val = clamp(val);
+        if (source !== "slider") slider.value = val;
+        if (source !== "input") input.value = val.toFixed(1);
+        applyColor(val);
+      }
+
+      slider.addEventListener("input", () =>
+        update(parseFloat(slider.value), "slider"),
+      );
+
+      input.addEventListener("input", () => {
+        const v = parseFloat(input.value);
+        if (!isNaN(v)) update(v, "input");
+      });
+
+      input.addEventListener("blur", () => {
+        const v = parseFloat(input.value);
+        update(isNaN(v) ? 0 : v, "input");
+      });
+
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") input.blur();
+        if (e.key === "ArrowUp") {
+          e.preventDefault();
+          update(clamp(parseFloat(slider.value) + STEP), "both");
+        }
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          update(clamp(parseFloat(slider.value) - STEP), "both");
+        }
+      });
+
+      btnMinus.addEventListener("click", () =>
+        update(clamp(parseFloat(slider.value) - STEP), "both"),
+      );
+      btnPlus.addEventListener("click", () =>
+        update(clamp(parseFloat(slider.value) + STEP), "both"),
+      );
+
+      // Init
+      update(0, "both");
+    </script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    if (typeof qt !== "undefined") {
+
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+
+            window.bridge = channel.objects.bridge;
+            console.log("Bridge connected");
+
+            const report = document.getElementById("menuReport");
+            if (report) {
+                report.onclick = function () {
+                    bridge.goReport();
+                };
+            }
+
+        });
+
+    }
+
+});
+</script>
+  </body>
+</html>

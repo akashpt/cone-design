@@ -1,11 +1,20 @@
-if (typeof qt !== "undefined") {
-    new QWebChannel(qt.webChannelTransport, function(channel) {
-        const bridge = channel.objects.bridge;
-        if (bridge) {
-            bridge.stopCamera();
+document.addEventListener("DOMContentLoaded", function () {
+
+    if (typeof qt !== "undefined") {
+
+        if (window.bridge) {
+            // Already connected
+            return;
         }
-    });
-}
+
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+            window.bridge = channel.objects.bridge;
+            console.log("Bridge connected safely");
+        });
+
+    }
+
+});
 // Date
 document.getElementById("reportDate").textContent =
   new Date().toLocaleDateString("en-IN", {

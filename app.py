@@ -31,10 +31,12 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("Cop Design System")
         self.resize(1200, 800)
-        self.current_interval = 30
+        
         self.base_dir = base_dir
         self.templates_dir = os.path.join(base_dir, "templates")
-        self.training_single_shot = False
+      
+        self.current_page = "index"
+        self.current_interval = 30   # default for inspection
 
         # Web view
         self.view = QWebEngineView()
@@ -76,18 +78,28 @@ class MainWindow(QMainWindow):
 
         print(f"Switching to {page_name}")
 
-        # Stop timer safely
+        # Stop camera safely
         if self.timer.isActive():
             self.timer.stop()
 
-        # Stop current camera safely
         if hasattr(self, "camera") and self.camera:
             try:
                 self.camera.stop()
             except Exception as e:
                 print("Camera stop error:", e)
 
-        # Reset page
+        # -------- SET PAGE MODE --------
+        if page_name == "training.html":
+            self.current_page = "training"
+            self.current_interval = 200   # 200ms only for training
+        else:
+            self.current_page = "inspection"
+            self.current_interval = 30    # 30ms for normal inspection
+
+        # 🔥 IMPORTANT: Remove old WebChannel first
+        # self.view.page().setWebChannel(None)
+
+        # Clear page
         self.view.setUrl(QUrl("about:blank"))
 
         full_path = os.path.join(self.templates_dir, page_name)
@@ -97,6 +109,8 @@ class MainWindow(QMainWindow):
         else:
             print("Page not found:", full_path)
 
+        # 🔥 Reconnect WebChannel AFTER loading
+        self.view.page().setWebChannel(self.channel)
 
     def set_capture_interval(self, ms):
         self.current_interval = ms
@@ -105,9 +119,11 @@ class MainWindow(QMainWindow):
             self.timer.stop()
             self.timer.start(self.current_interval)
 
-    def start_camera(self, single_shot=False):
+    def start_camera(self):
 
-        self.training_single_shot = single_shot
+        if self.timer.isActive():
+            print("Camera already running")
+            return
 
         if self.camera is None:
             if self.camera_type == "webcam":
@@ -120,19 +136,15 @@ class MainWindow(QMainWindow):
                 print("Invalid camera type")
                 return
 
-        self.camera.start()
+        if not self.camera.start():
+            print("Camera failed to start")
+            self.camera = None
+            return
 
-        if single_shot:
-            self.grab_frame()   # capture only one frame
-        else:
-            # self.timer.start(30)
-            self.timer.start(self.current_interval)
+        print("Starting camera:", self.camera_type)
 
-            print("Starting camera:", self.camera_type)
+        self.timer.start(self.current_interval)
 
-            # self.camera.start()
-            self.timer.start(30)
-        
     def stop_camera(self):
 
         self.timer.stop()
@@ -197,9 +209,6 @@ class MainWindow(QMainWindow):
                 cv2.imwrite(save_path, frame)
                 
 
-        if self.training_single_shot:
-            self.timer.stop()
-            self.training_single_shot = False
 
  #------- CAMERA START --------       
 

@@ -50,7 +50,7 @@ class Bridge(QObject):
     @pyqtSlot()
     def startCamera(self):
         #self.app_ref.start_camera()
-         self.app_ref.start_camera(single_shot=False)
+         self.app_ref.start_camera()
 
     @pyqtSlot()
     def stopCamera(self):
@@ -101,6 +101,12 @@ class Bridge(QObject):
     def goTraining(self):
         self.app_ref.stop_camera()
         self.app_ref.load_page("training.html")
+        
+    @pyqtSlot()
+    def goController(self):
+        print(">>> goController SLOT CALLED")
+        self.app_ref.stop_camera()
+        self.app_ref.load_page("controller.html")
 
     @pyqtSlot()
     def startTraining(self):
@@ -113,15 +119,12 @@ class Bridge(QObject):
     @pyqtSlot(str) 
     def startContinuousTraining(self, settings_json):
 
-       
-      
-
         if self.training_active:
             print("Training already running")
             return
 
         self.training_thread = QThread()
-        self.training_worker = TrainingWorker(self, settings_json, interval_ms=500)
+        self.training_worker = TrainingWorker(self, settings_json, interval_ms=2000)
 
         self.training_worker.moveToThread(self.training_thread)
 

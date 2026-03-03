@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Texa | COPS</title>
+
+    <link rel="stylesheet" href="../static/css/all.min.css" />
+
+    <link rel="stylesheet" href="../static/css/style.css" />
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+    <style>
+      
+    </style>
+  </head>
+
+  <body>
+    <div id="loaderDots" class="dots-loader">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+
+    <aside>
+      <div class="logo-area">
+        <div class="logo_div">
+          <a href="index.html">
+            <img src="../static/img/logo.png" alt="Logo" />
+          </a>
+        </div>
+      </div>
+      <div class="menu-section">
+        <div class="menu-label">Navigation</div>
+        <a href="index.html" rel="noopener noreferrer">
+          <div class="menu-item"><i class="fa-solid fa-house"></i> HOME</div>
+        </a>
+        <a href="report.html" rel="noopener noreferrer">
+          <div class="menu-item">
+            <i class="fa-solid fa-chart-simple"></i> REPORT
+          </div>
+        </a>
+        <div class="menu-item">
+          <i class="fa-solid fa-sliders"></i> CONTROLLER
+        </div>
+        <a href="traning.html" rel="noopener noreferrer">
+          <div class="menu-item active">
+            <i class="fa-solid fa-microchip"></i> TRAINING
+          </div>
+        </a>
+        <div class="menu-label" style="margin-top: 4px">System</div>
+        <div class="menu-item"><i class="fa-solid fa-gear"></i> SETTINGS</div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="signal-block">
+          <div class="signal-label">COPS Count</div>
+          <div class="signal-value">
+            <span class="signal-dot"></span><span id="signalCount">244</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main>
+      <header>
+        <div class="header-left">
+          <span class="breadcrumb">COPS Inspection</span>
+          <span class="header-badge">YARN INSPECTION</span>
+        </div>
+        <div id="statusPill" class="status-pill waiting">
+          <span class="status-dot"></span>
+          <span id="statusText">WAITING</span>
+        </div>
+        <div class="header-right">
+          <span id="liveTime">--/--/---- — --:--:--</span>
+          <div class="header-user">
+            <i
+              class="fa-solid fa-user"
+              style="opacity: 0.8; font-size: 0.68rem"
+            ></i>
+          </div>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="camera-wrap">
+          <div class="camera-area">
+            <!-- <video id="video" autoplay playsinline muted></video> -->
+            <img id="video" />
+            <div id="placeholder" class="camera-placeholder">
+              <div class="cam-ring"><i class="fa-solid fa-camera"></i></div>
+              <div class="cam-hint">
+                Select settings in the modal<br />then press
+                <strong>START</strong>
+              </div>
+            </div>
+            <div id="camOverlay" class="cam-overlay">
+              <div class="scan-line"></div>
+              <div class="corner-tl"></div>
+              <div class="corner-tr"></div>
+              <div class="corner-bl"></div>
+              <div class="corner-br"></div>
+              <div class="cam-footer">
+                <span class="cam-tag" id="camTag">—</span>
+                <div class="live-badge"><span class="live-dot"></span>LIVE</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="metrics-bar mtb-10">
+            <div class="metric-item">
+              <div class="metric-icon ic-red">
+                <i class="fa-solid fa-magnifying-glass"></i>
+              </div>
+              <div>
+                <div class="metric-label">Inspected</div>
+                <div class="metric-val" id="mInspected">—</div>
+              </div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-icon ic-green">
+                <i class="fa-solid fa-check-circle"></i>
+              </div>
+              <div>
+                <div class="metric-label">Pass Rate</div>
+                <div class="metric-val" id="mPassRate">—</div>
+              </div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-icon ic-amber">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+              <div>
+                <div class="metric-label">Defects</div>
+                <div class="metric-val" id="mDefects">—</div>
+              </div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-icon ic-blue">
+                <i class="fa-solid fa-clock"></i>
+              </div>
+              <div>
+                <div class="metric-label">Uptime</div>
+                <div class="metric-val" id="mUptime">00:00</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="controls-sidebar">
+          <div class="panel-sec">
+            <div class="sec-lbl">Controls</div>
+            <div class="btn-row">
+              <button id="btnStart" class="btn-main btn-start">
+                <span class="btn-icon"
+                  ><i class="fa-solid fa-circle-play"></i
+                ></span>
+                <span class="btn-label">START</span>
+              </button>
+              <button id="btnStop" class="btn-main btn-stop" disabled>
+                <span class="btn-icon"
+                  ><i class="fa-solid fa-circle-stop"></i
+                ></span>
+                <span class="btn-label">STOP</span>
+              </button>
+            </div>
+          </div>
+          <div
+            class="panel-sec"
+            style="
+              margin-top: 24px;
+              padding-top: 16px;
+              border-top: 1px solid #e5e7eb;
+            "
+          >
+            <div class="sec-lbl">Live Camera Only</div>
+            <div class="btn-row">
+              <button id="btnLiveStart" class="btn-main btn-start">
+                <span class="btn-icon"><i class="fa-solid fa-video"></i></span>
+                <span class="btn-label">LIVE START</span>
+              </button>
+              <button id="btnLiveStop" class="btn-main btn-stop" disabled>
+                <span class="btn-icon"
+                  ><i class="fa-solid fa-video-slash"></i
+                ></span>
+                <span class="btn-label">LIVE STOP</span>
+              </button>
+            </div>
+          </div>
+          <div class="panel-sec">
+            <div class="sec-lbl">Optional settings</div>
+            <div class="field">
+              <label>Trained Model</label>
+              <select id="trainedModelSelect" class="model-display">
+                <option value="">— Select model in modal —</option>
+              </select>
+            </div>
+            <div
+              style="margin-top: 8px; font-size: 0.75rem; color: var(--muted)"
+            >
+              Model selection & addition is done in the start modal
+            </div>
+          </div>
+
+          <!-- <div class="panel-sec">
+            <div class="action-row">
+              <button class="btn-sec btn-ghost" id="btnReset">
+                <i class="fa-solid fa-rotate-left"></i> Reset All
+              </button>
+              <button class="btn-sec btn-solid" id="btnSave" disabled>
+                <i class="fa-solid fa-floppy-disk"></i> Save Config
+              </button>
+            </div>
+          </div> -->
+        </div>
+      </div>
+    </main>
+
+    <!-- MODAL -->
+    <div id="startModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Inspection Settings</h3>
+          <button type="button" id="closeModal" class="close-btn">×</button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size: 0.9rem; color: #6b7280; margin-bottom: 18px">
+            Please select the required parameters before starting
+          </p>
+          <div class="fields-grid">
+            <div class="field">
+              <label><span class="req">Material</span></label>
+              <select id="modalMaterial">
+                <option value="">— Pick a material —</option>
+                <option>Cotton</option>
+                <option>Polyester</option>
+                <option>Blended</option>
+              </select>
+            </div>
+            <div class="field_flex">
+              <div class="field">
+                <label><span class="req">Count</span></label>
+                <select id="modalCount">
+                  <option value="">— Pick —</option>
+                  <option>20s</option>
+                  <option>30s</option>
+                  <option>40s</option>
+                </select>
+              </div>
+              <div class="field">
+                <label><span class="req">Yarn</span></label>
+                <select id="modalYarn">
+                  <option value="">— Pick —</option>
+                  <option>9-1</option>
+                  <option>10-1</option>
+                  <option>12-1</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field" style="margin-top: 20px">
+              <label>Trained Model</label>
+              <select id="modalTrainedSelect">
+                <option value="">— Select or add new —</option>
+              </select>
+            </div>
+
+            <div class="field" style="margin-top: 12px">
+              <label>Add new model</label>
+              <input
+                type="text"
+                id="newModelInput"
+                placeholder="Type new model name and press Enter..."
+              />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="modalCancel" class="btn-sec btn-ghost">Cancel</button>
+          <button id="modalConfirm" class="btn-sec btn-solid" disabled>
+            Confirm & Start
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast">
+      <i class="fa-solid fa-circle-check"></i>
+      <span id="toastMsg">Done.</span>
+    </div>
+
+    <script src="../static/script/traning.js"></script>
+
+    <script>
+      // Add this at the end of your <script> or in a new script block
+      window.addEventListener(
+        "wheel",
+        function (e) {
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        },
+        { passive: false },
+      );
+
+      window.addEventListener(
+        "keydown",
+        function (e) {
+          // Block Ctrl + +, Ctrl + -, Ctrl + 0, Cmd + +, etc.
+          if (
+            (e.ctrlKey || e.metaKey) &&
+            (e.key === "+" || e.key === "-" || e.key === "=" || e.key === "0")
+          ) {
+            e.preventDefault();
+          }
+        },
+        { passive: false },
+      );
+    </script>
+  </body>
+</html>

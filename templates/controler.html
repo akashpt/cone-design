@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Texa | COPS</title>
+
+    <link rel="stylesheet" href="../static/css/all.min.css" />
+    <link rel="stylesheet" href="../static/css/style.css" />
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+  </head>
+  <body>
+    <div id="loaderDots" class="dots-loader">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+    <aside>
+      <div class="logo-area">
+        <div class="logo_div">
+          <a href="index.html">
+            <img src="../static/img/logo.png" alt="Logo" />
+          </a>
+        </div>
+      </div>
+      <div class="menu-section">
+        <div class="menu-label">Navigation</div>
+
+        <a href="index.html" rel="noopener noreferrer" class="navigable">
+          <div class="menu-item active">
+            <i class="fa-solid fa-house"></i> HOME
+          </div>
+        </a>
+
+        <div class="menu-item navigable" onclick="bridge.goReport()">
+          <i class="fa-solid fa-chart-simple"></i> REPORT
+        </div>
+
+        <div class="menu-item navigable">
+          <i class="fa-solid fa-sliders"></i> CONTROLLER
+        </div>
+
+        <div class="menu-item navigable" onclick="bridge.goTraining()">
+          <i class="fa-solid fa-microchip"></i> TRAINING
+        </div>
+
+        <div class="menu-label" style="margin-top: 4px">System</div>
+
+        <div class="menu-item navigable">
+          <i class="fa-solid fa-gear"></i> SETTINGS
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="signal-block">
+          <div class="signal-label">COPS Count</div>
+          <div class="signal-value">
+            <span class="signal-dot"></span><span id="signalCount">244</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+    <main>
+      
+      <header>
+        <div class="header-left">
+          <span class="breadcrumb">COPS Inspection </span>
+          <span class="header-badge">YARN INSPECTION</span>
+        </div>
+        <div id="statusPill" class="status-pill waiting">
+          <span class="status-dot"></span>
+          <span id="statusText">WAITING</span>
+        </div>
+        <div class="header-right">
+          <span id="liveTime">--/--/---- — --:--:--</span>
+          <div class="header-user">
+            <i
+              class="fa-solid fa-user"
+              style="opacity: 0.8; font-size: 0.68rem"
+            ></i>
+          </div>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="camera-wrap">
+          <div class="camera-area">
+            <img
+              id="video"
+              style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                z-index: 1;
+              "
+            />
+            <div id="placeholder" class="camera-placeholder">
+              <div class="cam-ring"><i class="fa-solid fa-camera"></i></div>
+              <div class="cam-hint">
+                Fill in the settings on the right<br />
+                then press the green <strong>START</strong> button
+              </div>
+            </div>
+            <div id="camOverlay" class="cam-overlay">
+              <div class="scan-line"></div>
+              <div class="corner-tl"></div>
+              <div class="corner-tr"></div>
+              <div class="corner-bl"></div>
+              <div class="corner-br"></div>
+              <div class="cam-footer">
+                <span class="cam-tag" id="camTag">—</span>
+                <div class="live-badge"><span class="live-dot"></span>LIVE</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="metrics-bar mtb-10">
+            <div class="metric-item">
+              <div class="metric-icon ic-red">
+                <i class="fa-solid fa-magnifying-glass"></i>
+              </div>
+              <div>
+                <div class="metric-label">Inspected</div>
+                <div class="metric-val" id="mInspected">—</div>
+              </div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-icon ic-green">
+                <i class="fa-solid fa-check-circle"></i>
+              </div>
+              <div>
+                <div class="metric-label">Pass Rate</div>
+                <div class="metric-val" id="mPassRate">—</div>
+              </div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-icon ic-amber">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+              <div>
+                <div class="metric-label">Defects</div>
+                <div class="metric-val" id="mDefects">—</div>
+              </div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-icon ic-blue">
+                <i class="fa-solid fa-clock"></i>
+              </div>
+              <div>
+                <div class="metric-label">Uptime</div>
+                <div class="metric-val" id="mUptime">00:00</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="controls-sidebar">
+          <div class="panel-sec">
+            <div class="sec-lbl">Controls</div>
+            <div class="btn-row">
+              <button id="btnStart" class="btn-main btn-start" disabled>
+                <span class="btn-icon"
+                  ><i class="fa-solid fa-circle-play"></i
+                ></span>
+                <span class="btn-label">START</span>
+              </button>
+              <button id="btnStop" class="btn-main btn-stop" disabled>
+                <span class="btn-icon"
+                  ><i class="fa-solid fa-circle-stop"></i
+                ></span>
+                <span class="btn-label">STOP</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="panel-sec">
+            <div class="sec-lbl">
+              Step 1 — Choose your settings
+              <span style="color: var(--primary)">*</span>
+            </div>
+            <div class="fields-grid">
+              <div class="field">
+                <label><span class="req">Material</span></label>
+                <select id="material">
+                  <option value="">— Pick a material —</option>
+                  <option>Cotton</option>
+                  <option>Polyester</option>
+                  <option>Blended</option>
+                </select>
+              </div>
+              <div class="two-col">
+                <div class="field">
+                  <label><span class="req">Count</span></label>
+                  <select id="count">
+                    <option value="">— Pick —</option>
+                    <option>20s</option>
+                    <option>30s</option>
+                    <option>40s</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label><span class="req">Yarn</span></label>
+                  <select id="yarn">
+                    <option value="">— Pick —</option>
+                    <option>9-1</option>
+                    <option>10-1</option>
+                    <option>12-1</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ok_btn_reste_btn_flex">
+            <button
+              id="btnOk"
+              class="btn-main ok_btn"
+              style="background: #722f37; color: white"
+              disabled
+            >
+              OK
+            </button>
+            <button
+              id="btnReset"
+              class="btn-main reset_btn"
+              style="background: #d97706; color: white"
+              disabled
+            >
+              RESET
+            </button>
+          </div>
+
+          <div class="panel-sec">
+            <div class="sec-lbl">Step 2 — Optional settings</div>
+            <div class="two-col">
+              <div class="field">
+                <label>Good</label>
+                <select id="good">
+                  <option value="">—</option>
+                  <option>1</option>
+                  <option>2</option>
+                  <option>3</option>
+                  <option>4</option>
+                  <option>5</option>
+                  <option>6</option>
+                  <option>7</option>
+                  <option>8</option>
+                  <option>9</option>
+                  <option>10</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Threshold</label>
+                <select id="threshold">
+                  <option value="">—</option>
+                  <option>1</option>
+                  <option>2</option>
+                  <option>3</option>
+                  <option>4</option>
+                  <option>5</option>
+                  <option>6</option>
+                  <option>7</option>
+                  <option>8</option>
+                  <option>9</option>
+                  <option>10</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-sec">
+            <div class="action-row">
+              <div class="cone-box">
+                <span class="cone-label">1st</span>
+                <p>COPS status: <strong class="coneStatus">Good</strong></p>
+              </div>
+
+              <div class="cone-box">
+                <span class="cone-label">2nd</span>
+                <p>COPS status: <strong class="coneStatus">Defect</strong></p>
+              </div>
+
+              <div class="cone-box">
+                <span class="cone-label">3rd</span>
+                <p>COPS status: <strong class="coneStatus">No COPS</strong></p>
+              </div>
+
+              <div class="cone-box">
+                <span class="cone-label">4th</span>
+                <p>COPS status: <strong class="coneStatus">No COPS</strong></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <div class="toast" id="toast">
+      <i class="fa-solid fa-circle-check"></i>
+      <span id="toastMsg">Done.</span>
+    </div>
+    <script src="../static/script/index.js"></script>
+  </body>
+</html>

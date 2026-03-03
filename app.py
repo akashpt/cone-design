@@ -31,7 +31,7 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("Cop Design System")
         self.resize(1200, 800)
-
+        self.current_interval = 30
         self.base_dir = base_dir
         self.templates_dir = os.path.join(base_dir, "templates")
         self.training_single_shot = False
@@ -98,11 +98,13 @@ class MainWindow(QMainWindow):
             print("Page not found:", full_path)
 
 
+    def set_capture_interval(self, ms):
+        self.current_interval = ms
 
-    # def start_camera(self):
-       
-    #     self.camera.start()
-    #     self.timer.start(30)
+        if self.timer.isActive():
+            self.timer.stop()
+            self.timer.start(self.current_interval)
+
     def start_camera(self, single_shot=False):
 
         self.training_single_shot = single_shot
@@ -123,11 +125,12 @@ class MainWindow(QMainWindow):
         if single_shot:
             self.grab_frame()   # capture only one frame
         else:
-            self.timer.start(30)
+            # self.timer.start(30)
+            self.timer.start(self.current_interval)
 
             print("Starting camera:", self.camera_type)
 
-            self.camera.start()
+            # self.camera.start()
             self.timer.start(30)
         
     def stop_camera(self):
@@ -165,7 +168,34 @@ class MainWindow(QMainWindow):
         jpg = base64.b64encode(buffer).decode()
 
         self.bridge.frame_signal.emit(jpg)
-           
+
+
+        # Save only if training is active
+        if hasattr(self.bridge, "training_active") and self.bridge.training_active:
+
+            material = getattr(self.bridge, "material", None)
+            count = getattr(self.bridge, "count", None)
+            yarn = getattr(self.bridge, "yarn", None)
+
+            if material and count and yarn:
+
+                from datetime import datetime
+
+                save_dir = os.path.join(
+                    self.base_dir,
+                    "training_images",
+                    material,
+                    count,
+                    yarn
+                )
+
+                os.makedirs(save_dir, exist_ok=True)
+
+                ts = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+                save_path = os.path.join(save_dir, f"train_{ts}.jpg")
+
+                cv2.imwrite(save_path, frame)
+                
 
         if self.training_single_shot:
             self.timer.stop()

@@ -243,9 +243,23 @@ document.addEventListener("DOMContentLoaded", function () {
 
     startMetrics();
 
-    if (window.bridge && bridge.startCamera) {
-      setTimeout(() => bridge.startCamera(), 300);
-    }
+    if (window.bridge) {
+
+    // 1️⃣ Start camera live
+    bridge.startCamera();
+
+    // 2️⃣ Start continuous training (B method)
+    const settings = JSON.stringify({
+      material: modalMaterial.value,
+      count: modalCount.value,
+      yarn: modalYarn.value,
+      model: selectedModel
+    });
+
+    setTimeout(() => {
+      bridge.startContinuousTraining(settings);
+    }, 300);
+  }
 
     video.style.display = "block";
     placeholder.style.display = "none";
@@ -307,8 +321,9 @@ document.addEventListener("DOMContentLoaded", function () {
     camTag.textContent = "Live view — no inspection active";
 
     if (window.bridge && bridge.startCamera) {
-      // bridge.startCamera();
-      bridge.startTrainingCapture(); // ← single frame for training (no metrics)
+       bridge.startCamera();
+       bridge.setTrainingMode();
+    
     }
 
     video.style.display = "block";
@@ -326,9 +341,11 @@ document.addEventListener("DOMContentLoaded", function () {
     statusText.textContent = "WAITING";
     camTag.textContent = "—";
 
-    if (window.bridge && bridge.stopCamera) {
-      bridge.stopCamera();
-    }
+  if (window.bridge) {
+    bridge.stopContinuousTraining();  // stop thread
+    bridge.stopCamera();
+    bridge.resetNormalMode();              // stop camera
+  }
 
     video.style.display = "none";
     placeholder.style.display = "flex";

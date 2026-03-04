@@ -9,11 +9,55 @@
     <title>Texa | COPS</title>
 
     <link rel="stylesheet" href="../static/css/all.min.css" />
-
     <link rel="stylesheet" href="../static/css/style.css" />
     <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+
     <style>
-      
+      .req {
+        color: #ef4444;
+        margin-left: 4px;
+      }
+
+      /* Common field styling */
+      .field {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 15px;
+      }
+
+      .field label {
+        font-size: 14px;
+        margin-bottom: 6px;
+        font-weight: 500;
+        color: #333;
+      }
+
+      .field input,
+      .field select {
+        padding: 10px 12px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 14px;
+        outline: none;
+        transition: all 0.3s ease;
+      }
+
+      .field input:focus,
+      .field select:focus {
+        border-color: #4a90e2;
+        box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+      }
+
+      .field_flex {
+        display: flex;
+        gap: 15px;
+      }
+
+      @media (max-width: 600px) {
+        .field_flex {
+          flex-direction: column;
+        }
+      }
     </style>
   </head>
 
@@ -32,27 +76,34 @@
           </a>
         </div>
       </div>
+
       <div class="menu-section">
         <div class="menu-label">Navigation</div>
+
         <a href="index.html" onclick="bridge.goHome()">
           <div class="menu-item"><i class="fa-solid fa-house"></i> HOME</div>
         </a>
-       
-      <div class="menu-item" id="menuReport">
+
+        <a href="#" id="menuReport">
+          <div class="menu-item">
             <i class="fa-solid fa-chart-simple"></i> REPORT
-         </div>
+          </div>
         </a>
-        <div class="menu-item"  onclick="bridge.goController()">
+
+        <div class="menu-item" onclick="bridge.goController()">
           <i class="fa-solid fa-sliders"></i> CONTROLLER
         </div>
+
         <a href="training.html" onclick="bridge.goTraining()">
           <div class="menu-item active">
             <i class="fa-solid fa-microchip"></i> TRAINING
           </div>
         </a>
+
         <div class="menu-label" style="margin-top: 4px">System</div>
         <div class="menu-item"><i class="fa-solid fa-gear"></i> SETTINGS</div>
       </div>
+
       <div class="sidebar-footer">
         <div class="signal-block">
           <div class="signal-label">COPS Count</div>
@@ -87,8 +138,11 @@
       <div class="content">
         <div class="camera-wrap">
           <div class="camera-area">
-            <!-- <video id="video" autoplay playsinline muted></video> -->
-            <img id="video" style="width:100%; height:100%; object-fit:contain;" />
+            <img
+              id="video"
+              style="width: 100%; height: 100%; object-fit: contain"
+              alt="Camera feed"
+            />
             <div id="placeholder" class="camera-placeholder">
               <div class="cam-ring"><i class="fa-solid fa-camera"></i></div>
               <div class="cam-hint">
@@ -150,23 +204,6 @@
         </div>
 
         <div class="controls-sidebar">
-          <div class="panel-sec">
-            <div class="sec-lbl">Controls</div>
-            <div class="btn-row">
-              <button id="btnStart" class="btn-main btn-start">
-                <span class="btn-icon"
-                  ><i class="fa-solid fa-circle-play"></i
-                ></span>
-                <span class="btn-label">START</span>
-              </button>
-              <button id="btnStop" class="btn-main btn-stop" disabled>
-                <span class="btn-icon"
-                  ><i class="fa-solid fa-circle-stop"></i
-                ></span>
-                <span class="btn-label">STOP</span>
-              </button>
-            </div>
-          </div>
           <div
             class="panel-sec"
             style="
@@ -189,6 +226,25 @@
               </button>
             </div>
           </div>
+
+          <div class="panel-sec">
+            <div class="sec-lbl">Controls</div>
+            <div class="btn-row">
+              <button id="btnStart" class="btn-main btn-start">
+                <span class="btn-icon"
+                  ><i class="fa-solid fa-circle-play"></i
+                ></span>
+                <span class="btn-label">START</span>
+              </button>
+              <button id="btnStop" class="btn-main btn-stop" disabled>
+                <span class="btn-icon"
+                  ><i class="fa-solid fa-circle-stop"></i
+                ></span>
+                <span class="btn-label">STOP</span>
+              </button>
+            </div>
+          </div>
+
           <div class="panel-sec">
             <div class="sec-lbl">Optional settings</div>
             <div class="field">
@@ -203,17 +259,6 @@
               Model selection & addition is done in the start modal
             </div>
           </div>
-
-          <!-- <div class="panel-sec">
-            <div class="action-row">
-              <button class="btn-sec btn-ghost" id="btnReset">
-                <i class="fa-solid fa-rotate-left"></i> Reset All
-              </button>
-              <button class="btn-sec btn-solid" id="btnSave" disabled>
-                <i class="fa-solid fa-floppy-disk"></i> Save Config
-              </button>
-            </div>
-          </div> -->
         </div>
       </div>
     </main>
@@ -225,38 +270,39 @@
           <h3>Inspection Settings</h3>
           <button type="button" id="closeModal" class="close-btn">×</button>
         </div>
+
         <div class="modal-body">
           <p style="font-size: 0.9rem; color: #6b7280; margin-bottom: 18px">
             Please select the required parameters before starting
           </p>
+
           <div class="fields-grid">
             <div class="field">
               <label><span class="req">Material</span></label>
-              <select id="modalMaterial">
-                <option value="">— Pick a material —</option>
-                <option>Cotton</option>
-                <option>Polyester</option>
-                <option>Blended</option>
-              </select>
+              <input
+                type="text"
+                id="modalMaterial"
+                placeholder="Enter material (e.g., Cotton)"
+              />
             </div>
+
             <div class="field_flex">
               <div class="field">
                 <label><span class="req">Count</span></label>
-                <select id="modalCount">
-                  <option value="">— Pick —</option>
-                  <option>20s</option>
-                  <option>30s</option>
-                  <option>40s</option>
-                </select>
+                <input
+                  type="text"
+                  id="modalCount"
+                  placeholder="Enter count (e.g., 20s)"
+                />
               </div>
+
               <div class="field">
                 <label><span class="req">Yarn</span></label>
-                <select id="modalYarn">
-                  <option value="">— Pick —</option>
-                  <option>9-1</option>
-                  <option>10-1</option>
-                  <option>12-1</option>
-                </select>
+                <input
+                  type="text"
+                  id="modalYarn"
+                  placeholder="Enter yarn (e.g., 9-1)"
+                />
               </div>
             </div>
 
@@ -277,6 +323,7 @@
             </div>
           </div>
         </div>
+
         <div class="modal-footer">
           <button id="modalCancel" class="btn-sec btn-ghost">Cancel</button>
           <button id="modalConfirm" class="btn-sec btn-solid" disabled>
@@ -294,7 +341,7 @@
     <script src="../static/script/traning.js"></script>
 
     <script>
-      // Add this at the end of your <script> or in a new script block
+      // Prevent zoom on Ctrl + scroll / pinch
       window.addEventListener(
         "wheel",
         function (e) {
@@ -309,7 +356,6 @@
       window.addEventListener(
         "keydown",
         function (e) {
-          // Block Ctrl + +, Ctrl + -, Ctrl + 0, Cmd + +, etc.
           if (
             (e.ctrlKey || e.metaKey) &&
             (e.key === "+" || e.key === "-" || e.key === "=" || e.key === "0")
@@ -320,7 +366,5 @@
         { passive: false },
       );
     </script>
-
-
   </body>
 </html>

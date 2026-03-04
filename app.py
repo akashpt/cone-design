@@ -1,15 +1,13 @@
 # app.py
 import sys
 import os
-import cv2
-import base64
-import json
+
 from PyQt5.QtWidgets import QApplication ,QMainWindow
 from PyQt5.QtCore import QTimer, QUrl ,pyqtSlot ,Qt
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWebChannel import QWebChannel
-from pathlib import Path
+
 from classes.bridge import Bridge
 import time
 import numpy as np
@@ -17,26 +15,46 @@ from classes.webcam import WebcamCamera
 from classes.lucidcamera import LucidCamera
 from classes.mindvision_cam import MindVisionCamera
 
+from PyQt5.QtWidgets import QMessageBox
 
 
 import classes.sdk_setup as sdk_setup
 sdk_setup.setup_sdk()
 
 from arena_api.system import system
+from path import TEMPLATES_DIR
+
+
+# ==============================
+# 🔐 PASSWORD DECORATOR
+# ==============================
+
+def password_required(func):
+    def wrapper(self, *args, **kwargs):
+
+        correct_password = "Texa@123"
+
+        # password should come from bridge (HTML input)
+        password = getattr(self.bridge, "entered_password", "")
+
+        if password == correct_password:
+            QMessageBox.information(self, "Success", "Password Correct ✅")
+            return func(self, *args, **kwargs)
+        else:
+            QMessageBox.warning(self, "Error", "Wrong Password ❌")
+            self.load_page("index.html")   # Go to Home page
+
+    return wrapper
 
 class MainWindow(QMainWindow):
 
-    def __init__(self, base_dir):
+    def __init__(self):
         super().__init__()
 
         self.setWindowTitle("Cop Design System")
         self.resize(1200, 800)
         
-        self.base_dir = base_dir
-        self.templates_dir = os.path.join(base_dir, "templates")
-      
-        self.current_page = "index"
-        self.current_interval = 30   # default for inspection
+        
 
         # Web view
         self.view = QWebEngineView()
@@ -48,25 +66,7 @@ class MainWindow(QMainWindow):
         self.channel.registerObject("bridge", self.bridge)
         self.view.page().setWebChannel(self.channel)
 
-        # Camera
-        # options: 'lucid', 'webcam', 'mindvision'
-        self.camera_type="lucid"  # or 'webcam' #lucid
-
-        if self.camera_type=="webcam":
-            self.camera=WebcamCamera()
-        elif self.camera_type=="lucid":
-            self.camera=LucidCamera()
-        elif self.camera_type=="MindVision":
-            self.camera=MindVisionCamera()
         
-        else:
-            self.camera = None
-            print("Invalid camera type")
-
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.grab_frame)
-        self.prev_time = 0
-        self.fps = 0
 
         # Load first page
         self.load_page("index.html")
@@ -78,298 +78,26 @@ class MainWindow(QMainWindow):
 
         print(f"Switching to {page_name}")
 
-        # Stop camera safely
-        if self.timer.isActive():
-            self.timer.stop()
-
-        if hasattr(self, "camera") and self.camera:
-            try:
-                self.camera.stop()
-            except Exception as e:
-                print("Camera stop error:", e)
-
-        # -------- SET PAGE MODE --------
-        if page_name == "training.html":
-            self.current_page = "training"
-            self.current_interval = 200   # 200ms only for training
-        else:
-            self.current_page = "inspection"
-            self.current_interval = 30    # 30ms for normal inspection
-
-        # 🔥 IMPORTANT: Remove old WebChannel first
-        # self.view.page().setWebChannel(None)
-
-        # Clear page
         self.view.setUrl(QUrl("about:blank"))
 
-        full_path = os.path.join(self.templates_dir, page_name)
+        full_path = TEMPLATES_DIR / page_name
 
-        if os.path.exists(full_path):
-            self.view.load(QUrl.fromLocalFile(full_path))
+        if full_path.exists():
+            self.view.load(QUrl.fromLocalFile(str(full_path)))
         else:
             print("Page not found:", full_path)
 
-        # 🔥 Reconnect WebChannel AFTER loading
         self.view.page().setWebChannel(self.channel)
-
-    def set_capture_interval(self, ms):
-        self.current_interval = ms
-
-        if self.timer.isActive():
-            self.timer.stop()
-            self.timer.start(self.current_interval)
-
-    def start_camera(self):
-
-        if self.timer.isActive():
-            print("Camera already running")
-            return
-
-        if self.camera is None:
-            if self.camera_type == "webcam":
-                self.camera = WebcamCamera()
-            elif self.camera_type == "lucid":
-                self.camera = LucidCamera()
-            elif self.camera_type == "mindvision":
-                self.camera = MindVisionCamera()
-            else:
-                print("Invalid camera type")
-                return
-
-        if not self.camera.start():
-            print("Camera failed to start")
-            self.camera = None
-            return
-
-        print("Starting camera:", self.camera_type)
-
-        self.timer.start(self.current_interval)
-
-    def stop_camera(self):
-
-        self.timer.stop()
-
-        if self.camera:
-            self.camera.stop()
-            self.camera = None
-
-        print("Camera Stopped")
-
-    def grab_frame(self):
-
-        frame = self.camera.get_frame()
-        # print("Grabbing frame")
-
-        if frame is None:
-            return
-          # -------- FPS CALCULATION --------
-        current_time = time.time()
-        if self.prev_time != 0:
-            self.fps = 1 / (current_time - self.prev_time)
-        self.prev_time = current_time
-
-        # Draw FPS on frame
-        cv2.putText(frame,
-                    f"FPS: {int(self.fps)}",
-                    (20, 40),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    (0, 255, 0),
-                    2)
-        _, buffer = cv2.imencode(".jpg", frame)
-        jpg = base64.b64encode(buffer).decode()
-
-        self.bridge.frame_signal.emit(jpg)
-
-
-        # Save only if training is active
-        if hasattr(self.bridge, "training_active") and self.bridge.training_active:
-
-            material = getattr(self.bridge, "material", None)
-            count = getattr(self.bridge, "count", None)
-            yarn = getattr(self.bridge, "yarn", None)
-
-            if material and count and yarn:
-
-                from datetime import datetime
-
-                save_dir = os.path.join(
-                    self.base_dir,
-                    "training_images",
-                    material,
-                    count,
-                    yarn
-                )
-
-                os.makedirs(save_dir, exist_ok=True)
-
-                ts = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-                save_path = os.path.join(save_dir, f"train_{ts}.jpg")
-
-                cv2.imwrite(save_path, frame)
-                
-
-
- #------- CAMERA START --------       
-
-    # def start_camera(self):
-
-    #     if self.timer.isActive():
-    #         print("Camera already running")
-    #         return
-
-    #     print("Camera Starting...")
-
-    #     if self.cap is None:
-    #         self.cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-
-    #     if not self.cap.isOpened():
-    #         print("Camera not found")
-    #         return
-
-    #     self.timer.start(30)
-    #     print("Camera Started")
-
+#----------------------------------------------------------------
 
     
-    # # -------- CAMERA STOP --------
-    # def stop_camera(self):
-
-    #     self.timer.stop()
-
-    #     if self.cap:
-    #         self.cap.release()
-    #         self.cap = None
-
-    #     print("Camera Stopped")
-
-    # # -------- FRAME SEND --------
-    # def grab_frame(self):
-    #     # print("Grabbing frame...")
-
-    #     if not self.cap:
-    #         return
-
-    #     ret, frame = self.cap.read()
-
-    #     if not ret:
-    #         return
-
-    #     _, buffer = cv2.imencode(".jpg", frame)
-    #     jpg = base64.b64encode(buffer).decode()
-
-    #     if self.view.page().webChannel():
-    #         try:
-    #             self.bridge.frame_signal.emit(jpg)
-    #         except:
-    #             pass
-
-
-# # -------- CAMERA START/STOP WITH LUCID --------
-
-#     def start_camera(self):
-#         if self.timer.isActive():
-#             print("camera already running")
-#             return
-#         print("Connecting Lucid camera...")
-
-#         device=system.create_device()
-
-#         if len(device)==0:
-#             print("no camera fonud")
-#             return
-#         self.device=device[0]
-
-#         nodemap=self.device.nodemap
-          
-#           # Important for inspection stability
-
-#         nodemap['BalanceWhiteAuto'].value = 'Off'
-#         nodemap['ExposureAuto'].value = 'Off'
-#         nodemap['GainAuto'].value = 'Off'
-
-#         nodemap['ExposureTime'].value = 65500.0   # adjust based on lighting
-#         nodemap['Gain'].value = 0.0
-
-#          # Pixel format
-#         nodemap['PixelFormat'].value = 'BayerRG8'
-
-#         self.device.start_stream()
-#         self.timer.start(30) 
-#         print("camera started")
-
-#     def stop_camera(self):
-       
-#         self.timer.stop()
-
-#         if self.device:
-#             self.device.stop_stream()
-#             system.destroy_device()
-#             self.device = None
-
-#         print("Lucid Camera Stopped") 
-
-#     def grab_frame(self):
-
-#         if not self.device:
-#             return
-
-#         buffer = self.device.get_buffer()
-
-#         height = buffer.height
-#         width = buffer.width
-
-#         # Convert raw buffer to numpy
-#         raw = np.ctypeslib.as_array(buffer.pdata,
-#                                     shape=(height, width))
-
-#         # Convert BayerRG8 to BGR
-#         frame = cv2.cvtColor(raw, cv2.COLOR_BAYER_BG2BGR)
-
-#         self.device.requeue_buffer(buffer)
-
-#         _, buffer_jpg = cv2.imencode(".jpg", frame)
-#         jpg = base64.b64encode(buffer_jpg).decode()
-
-#         self.bridge.frame_signal.emit(jpg)      
-
-#-------- SETTINGS SAVE --------
-
-    def save_Settings(self, material, count, yarn):
-        data={
-            "material": material,
-            "count": count,
-            "yarn": yarn
-        }
-          
-        json_path = Path(__file__).parent / "settings.json"
-        with open(json_path, "w") as f:
-          json.dump(data, f, indent=4)
-
-        print("Settings saved:", data)
-
-
-# -------- TRAINING --------
-    def start_training_process(self):
-      print("Running training process...")   
-
-    def save_training_settings(self, material, count, yarn, model):
-        data={
-            "material":material,
-            "count":count,
-            "yarn":yarn,
-            "model":model
-        }
-
-        json_path = Path(__file__).parent / "training_settings.json"
-
-        with open(json_path, "w") as f:
-            json.dump(data, f, indent=4)
-
-        print("Training settings saved:", data)
 
 
 
+
+    @password_required
+    def open_controller_page(self):
+        self.load_page("controller.html")
 
 #----------- REPORT WINDOW --------
     
@@ -392,14 +120,23 @@ class MainWindow(QMainWindow):
         view = QWebEngineView()
         self.report_window.setCentralWidget(view)
 
-        report_file = Path(__file__).parent / "templates" / "report.html"
+        report_file = TEMPLATES_DIR / "report.html"
         view.load(QUrl.fromLocalFile(str(report_file.resolve())))
 
         self.report_window.show()
 
+
+
+        
+
 #----------- CLEANUP ON CLOSE --------
     def closeEvent(self, event):
-        self.stop_camera()
+
+        try:
+            self.bridge.stop_camera()
+        except:
+            pass
+
         super().closeEvent(event)
 
 
@@ -410,9 +147,7 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
 
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-
-    window = MainWindow(base_dir)
+    window = MainWindow()
     window.show()
 
     sys.exit(app.exec_())

@@ -1,5 +1,3 @@
-# classes/lucid_cam.py
-
 from arena_api.system import system
 import numpy as np
 import cv2
@@ -14,20 +12,16 @@ class LucidCamera:
 
         if self.device:
             print("Lucid already started")
-            return
+            return True
 
-        devices = system.create_device()
+        self.devices = system.create_device()
 
-        if len(devices) == 0:
+        if len(self.devices) == 0:
             print("No Lucid camera found")
-            return
+            return False
 
-        self.device = devices[0]
+        self.device = self.devices[0]
         nodemap = self.device.nodemap
-        
-
-        # 👇 ADD THIS LINE HERE
-        # print("Current PixelFormat:", nodemap['PixelFormat'].value)
 
         nodemap['ExposureAuto'].value = 'Off'
         nodemap['GainAuto'].value = 'Off'
@@ -37,14 +31,29 @@ class LucidCamera:
         nodemap['Gain'].value = 0.0
 
         self.device.start_stream()
-    # print("Lucid Camera Started")
 
+        print("Lucid Camera Started")
+        return True   # ✅ VERY IMPORTANT
+    
     def stop(self):
+
         if self.device:
-            self.device.stop_stream()
-            system.destroy_device()
-            self.device = None
+            try:
+                # Just try stopping stream directly
+                self.device.stop_stream()
+            except Exception:
+                # Ignore if already stopped
+                pass
+
+            try:
+                system.destroy_device(self.devices)
+            except Exception as e:
+                print("Destroy error:", e)
+
             print("Lucid Camera Stopped")
+
+            self.device = None
+            self.devices = None
 
     def get_frame(self):
 
@@ -56,28 +65,17 @@ class LucidCamera:
         except Exception as e:
             print("Buffer error:", e)
             return None
-
+        
         raw = np.ctypeslib.as_array(
             buffer.pdata,
             shape=(buffer.height, buffer.width)
         )
 
-        pixel_format = self.device.nodemap['PixelFormat'].value
-        # print("PixelFormat:", pixel_format)
-
-        if pixel_format == "BayerRG8":
-            frame = cv2.cvtColor(raw, cv2.COLOR_BAYER_BG2BGR)
-
-        elif pixel_format == "BayerBG8":
-            frame = cv2.cvtColor(raw, cv2.COLOR_BAYER_RG2BGR)
-
-        elif pixel_format == "Mono8":
-            frame = cv2.cvtColor(raw, cv2.COLOR_GRAY2BGR)
-
-        else:
-            print("Unsupported format")
-            frame = raw
+        # 🔵 BG conversion
+        frame = cv2.cvtColor(raw, cv2.COLOR_BAYER_BG2BGR)
 
         self.device.requeue_buffer(buffer)
 
         return frame
+
+       

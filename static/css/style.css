@@ -16,6 +16,7 @@
   src: url("../fonts/Inter-Bold.woff2") format("woff2");
   font-weight: 700;
 }
+
 :root {
   --font-sans: "Inter", sans-serif;
   --primary: #722f37;
@@ -214,6 +215,7 @@ aside {
 }
 
 @keyframes blink {
+
   0%,
   100% {
     opacity: 1;
@@ -301,6 +303,7 @@ header {
 }
 
 @keyframes pillPulse {
+
   0%,
   100% {
     box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
@@ -522,14 +525,12 @@ header {
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(114, 47, 55, 0.85),
-    rgba(255, 100, 100, 0.95),
-    rgba(114, 47, 55, 0.85),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(114, 47, 55, 0.85),
+      rgba(255, 100, 100, 0.95),
+      rgba(114, 47, 55, 0.85),
+      transparent);
   animation: scanMove 2.5s linear infinite;
   box-shadow: 0 0 10px rgba(255, 80, 80, 0.5);
 }
@@ -794,28 +795,34 @@ select.filled {
   border-color: var(--primary);
   background-color: var(--primary-xl);
 }
+
 .ok_btn {
   margin-top: 10px;
   padding: 8px 10px;
   border-radius: 6px;
 }
+
 .reset_btn {
   margin-top: 10px;
   padding: 8px 10px;
   border-radius: 6px;
 }
+
 .two-col {
   display: grid;
   /* grid-template-columns: 1fr 1fr; */
   grid-template-columns: repeat(2, 1fr);
   margin-top: 10px;
 }
+
 .two-col .field {
   margin-right: 10px;
 }
+
 .two-col .field:last-child {
   margin-right: 0px;
 }
+
 /* ══ SESSION TABLE ══ */
 .info-table {
   width: 100%;
@@ -971,6 +978,7 @@ select.filled {
 }
 
 @keyframes pulse {
+
   0%,
   100% {
     transform: scale(1);
@@ -1086,6 +1094,7 @@ select.filled {
 }
 
 @keyframes pulse {
+
   0%,
   100% {
     transform: scale(1);
@@ -1110,28 +1119,40 @@ select.filled {
 .field_flex .field:last-child {
   margin-right: 0px;
 }
+
 .ok_btn_reste_btn_flex {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
   margin-inline: 20px;
+ 
 }
 
 /* Disabled sidebar menu style */
 aside.menu-disabled .menu-item,
 aside.menu-disabled a.menu-item {
   opacity: 0.45;
-  pointer-events: none; /* blocks clicks completely */
+  pointer-events: none;
+  /* blocks clicks completely */
   cursor: not-allowed;
-  color: #9ca3af; /* gray text */
+  color: #9ca3af;
+  /* gray text */
 }
 
 aside.menu-disabled .menu-item.active {
-  opacity: 0.6; /* slightly more visible so user knows current page */
+  opacity: 0.6;
+  /* slightly more visible so user knows current page */
   pointer-events: none;
 }
 
 /* Optional: disable hover effect too */
 aside.menu-disabled .menu-item:hover {
   background: transparent;
+}
+
+.cops_status p{
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 20px;
 }

@@ -88,7 +88,7 @@
         <div class="camera-wrap">
           <div class="camera-area">
             <!-- <video id="video" autoplay playsinline muted></video> -->
-            <img id="video" />
+            <img id="video" style="width:100%; height:100%; object-fit:contain;" />
             <div id="placeholder" class="camera-placeholder">
               <div class="cam-ring"><i class="fa-solid fa-camera"></i></div>
               <div class="cam-hint">
@@ -321,28 +321,6 @@
       );
     </script>
 
-<script>
-document.addEventListener("DOMContentLoaded", function () {
 
-    if (typeof qt !== "undefined") {
-
-        new QWebChannel(qt.webChannelTransport, function (channel) {
-
-            window.bridge = channel.objects.bridge;
-            console.log("Bridge connected");
-
-            const report = document.getElementById("menuReport");
-            if (report) {
-                report.onclick = function () {
-                    bridge.goReport();
-                };
-            }
-
-        });
-
-    }
-
-});
-</script>
   </body>
 </html>

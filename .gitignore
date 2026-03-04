@@ -7,7 +7,7 @@ arena_sdk/
 *.exe# SDK folders
 camera_sdk/
 arena_sdk/
-
+data/
 # Python virtual environment
 venv/
 env/

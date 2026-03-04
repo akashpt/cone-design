@@ -1,16 +1,38 @@
 document.addEventListener("DOMContentLoaded", function () {
-  if (typeof qt !== "undefined") {
-    new QWebChannel(qt.webChannelTransport, function (channel) {
-      window.bridge = channel.objects.bridge;
 
-      bridge.frame_signal.connect(function (imageData) {
-        const img = document.getElementById("video");
-        if (img) {
-          img.src = "data:image/jpeg;base64," + imageData;
-        }
-      });
-    });
-  }
+    if (typeof qt !== "undefined") {
+
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+
+            window.bridge = channel.objects.bridge;
+            console.log("Bridge connected");
+
+            // camera frames
+            bridge.frame_signal.connect(function (imageData) {
+
+                const img = document.getElementById("video");
+
+                if (img) {
+                    img.src = "data:image/jpeg;base64," + imageData;
+                }
+
+            });
+
+            // report button
+            const report = document.getElementById("menuReport");
+
+            if (report) {
+                report.onclick = function () {
+                    bridge.goReport();
+                };
+            }
+
+        });
+
+    }
+
+});
+
 
   // ────────────────────────────────────────────────
   //  Time & Toast
@@ -380,7 +402,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // ────────────────────────────────────────────────
   updateAllStates();
   btnStart.disabled = false;
-});
+
 
 // ────────────────────────────────────────────────
 //  Aggressive zoom blocking – run last

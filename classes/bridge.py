@@ -12,6 +12,7 @@ from classes.plc import machine_status ,gripper_function ,count_status
 from classes.webcam import WebcamCamera
 from classes.lucidcamera import LucidCamera
 from classes.mindvision_cam import MindVisionCamera
+from classes.hikrobot import HikRobotCamera
 
 class TrainingWorker(QObject):
 
@@ -56,7 +57,7 @@ class Bridge(QObject):
         self.last_count_signal = 0
         # ---------------- CAMERA ----------------
         self.camera = None
-        self.camera_type = "lucid"   # options: webcam / lucid / mindvision
+        self.camera_type = "webcam"   # options: webcam / lucid / mindvision
 
         self.current_interval = 30
 
@@ -96,14 +97,23 @@ class Bridge(QObject):
 
         self.training_active = False
         self.last_count_signal = 0
-
+        
         self.current_interval = 30
 
         self.start_camera()
 
+    # @pyqtSlot()
+    # def stopCamera(self):
+    #     self.stop_camera()
+
     @pyqtSlot()
     def stopCamera(self):
-        self.stop_camera()
+        self.timer.stop() # Stop the timer first!
+        if self.camera:
+            self.camera.stop()
+            self.camera = None # Set to None so start_camera can re-init
+        self.prev_time = 0 
+        print("Camera Stopped and Cleaned")
     
     @pyqtSlot()
     def startTraining(self):
@@ -190,7 +200,9 @@ class Bridge(QObject):
         if self.timer.isActive():
             print("Camera already running")
             return
-
+        
+        if self.camera and self.camera.start():
+          self.camera.set_exposure(115500)
         # create camera object if not exists
         if self.camera is None:
 
@@ -202,6 +214,9 @@ class Bridge(QObject):
 
             elif self.camera_type == "mindvision":
                 self.camera = MindVisionCamera()
+
+            elif self.camera_type == "hikrobot":
+                self.camera = HikRobotCamera()
 
             else:
                 print("Invalid camera type")

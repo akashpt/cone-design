@@ -78,3 +78,6 @@ TRAINING_SETTINGS_FILE = BASE_DIR / "training_settings.json"
 
 SIGNAL_FILE = BASE_DIR / "signal.txt"
 COUNT_FILE = BASE_DIR / "count.txt"
+
+
+CONFIG_DIR = BASE_DIR / "camera_sdk" 

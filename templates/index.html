@@ -487,5 +487,24 @@ function closeControllerModal() {
         { passive: false },
       );
     </script>
+
+  <script>
+  function checkControllerPassword(){
+
+      const passwordInput = document.getElementById("controllerPassword");
+      const password = passwordInput.value;
+
+      if(password === ""){
+          alert("Enter password");
+          return;
+      }
+
+      if(typeof bridge !== "undefined"){
+          bridge.sendPassword(password);
+          bridge.goController();
+      }
+
+  }
+  </script>
   </body>
 </html>

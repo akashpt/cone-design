@@ -7,12 +7,36 @@ import time
 from datetime import datetime
 import os
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot ,QThread, QTimer
-
+from functools import wraps
 from classes.plc import machine_status ,gripper_function ,count_status
 from classes.webcam import WebcamCamera
 from classes.lucidcamera import LucidCamera
 from classes.mindvision_cam import MindVisionCamera
 from classes.hikrobot import HikRobotCamera
+from PyQt5.QtWidgets import QMessageBox
+
+
+
+
+
+
+def password_required(func):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+
+            correct_password = "1234"
+
+            password = getattr(self, "entered_password", "")
+
+            if password == correct_password:
+                QMessageBox.information(self.app_ref, "Success", "Password Correct ✅")
+                return func(self, *args, **kwargs)
+
+            else:
+                QMessageBox.warning(self.app_ref, "Error", "Wrong Password ❌")
+                self.app_ref.load_page("index.html")
+
+        return wrapper
 
 class TrainingWorker(QObject):
 
@@ -81,13 +105,7 @@ class Bridge(QObject):
         self.yarn = None
 
 
- # ==========================================
-        # 🔐 PASSWORD CHECK FROM HTML
- # ==========================================
-    @pyqtSlot(str)
-    def checkPassword(self, password):
-        self.entered_password = password
-        self.app_ref.open_controller_page()
+
 
     # -------- CAMERA ----------
     @pyqtSlot()
@@ -153,7 +171,11 @@ class Bridge(QObject):
     @pyqtSlot()
     def stopContinuousTraining(self):
        self.training_active = False
-#--------------------------------------------
+
+
+
+
+
             
     @pyqtSlot(str, str, str)
     def saveSettings(self, material, count, yarn):
@@ -184,8 +206,18 @@ class Bridge(QObject):
     def goTraining(self):
         self.stop_camera()
         self.app_ref.load_page("training.html")
-        
+            
+
+
+# ==========================================
+        # 🔐 PASSWORD CHECK FROM HTML
+ # ==========================================
+    @pyqtSlot(str)
+    def sendPassword(self, password):
+        self.entered_password = password
+#-----------------------------------------
     @pyqtSlot()
+    @password_required
     def goController(self):
         print(">>> goController SLOT CALLED")
         self.stop_camera()

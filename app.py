@@ -11,7 +11,7 @@ from PyQt5.QtWebChannel import QWebChannel
 from classes.bridge import Bridge
 import time
 import numpy as np
-
+from functools import wraps
 
 from PyQt5.QtWidgets import QMessageBox
 
@@ -23,26 +23,7 @@ from arena_api.system import system
 from path import TEMPLATES_DIR
 
 
-# ==============================
-# 🔐 PASSWORD DECORATOR
-# ==============================
 
-def password_required(func):
-    def wrapper(self, *args, **kwargs):
-
-        correct_password = "Texa@123"
-
-        # password should come from bridge (HTML input)
-        password = getattr(self.bridge, "entered_password", "")
-
-        if password == correct_password:
-            QMessageBox.information(self, "Success", "Password Correct ✅")
-            return func(self, *args, **kwargs)
-        else:
-            QMessageBox.warning(self, "Error", "Wrong Password ❌")
-            self.load_page("index.html")   # Go to Home page
-
-    return wrapper
 
 class MainWindow(QMainWindow):
 
@@ -88,14 +69,7 @@ class MainWindow(QMainWindow):
         self.view.page().setWebChannel(self.channel)
 #----------------------------------------------------------------
 
-    
 
-
-
-
-    @password_required
-    def open_controller_page(self):
-        self.load_page("controller.html")
 
 #----------- REPORT WINDOW --------
     

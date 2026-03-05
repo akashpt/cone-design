@@ -15,24 +15,35 @@ document.addEventListener("DOMContentLoaded", function () {
         const controller = document.getElementById("menuController");
         const training = document.getElementById("menuTraining");
 
+        // HOME
         if (home) {
             home.onclick = function () {
                 if (bridge.goHome) setTimeout(() => bridge.goHome(), 0);
             };
         }
 
+        // REPORT
         if (report) {
             report.onclick = function () {
                 if (bridge.goReport) setTimeout(() => bridge.goReport(), 0);
             };
         }
 
+        // CONTROLLER (PASSWORD REQUIRED)
         if (controller) {
-        controller.onclick = () => {
-            setTimeout(() => bridge.goController(), 0);
-        };
-    }
+            controller.onclick = function () {
 
+                let password = prompt("Enter Password");
+
+                if (password !== null) {
+                    bridge.sendPassword(password);   // send password to python
+                    setTimeout(() => bridge.goController(), 0);
+                }
+
+            };
+        }
+
+        // TRAINING
         if (training) {
             training.onclick = function () {
                 if (bridge.goTraining) setTimeout(() => bridge.goTraining(), 0);
@@ -42,9 +53,13 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
 });
- 
- window.addEventListener("load", () => {
+
+
+
+
+
+window.addEventListener("load", () => {
     setTimeout(() => {
-      document.getElementById("loaderDots").style.display = "none";
+        document.getElementById("loaderDots").style.display = "none";
     }, 1400);
-  });
+});

@@ -13,7 +13,7 @@ from classes.webcam import WebcamCamera
 from classes.lucidcamera import LucidCamera
 from classes.mindvision_cam import MindVisionCamera
 from classes.hikrobot import HikRobotCamera
-from PyQt5.QtWidgets import QMessageBox
+
 
 
 
@@ -247,9 +247,7 @@ class Bridge(QObject):
         if self.timer.isActive():
             print("Camera already running")
             return
-        
-        if self.camera and self.camera.start():
-          self.camera.set_exposure(115500)
+
         # create camera object if not exists
         if self.camera is None:
 
@@ -270,9 +268,10 @@ class Bridge(QObject):
                 return
 
         # start camera
-        started = self.camera.start()
+        self.camera.start()
 
-        if not started:
+        # check camera started
+        if hasattr(self.camera, "hCamera") and self.camera.hCamera == 0:
             print("Camera failed to start")
             self.camera = None
             return
@@ -298,7 +297,10 @@ class Bridge(QObject):
         if not self.camera:
             return
 
-        frame = self.camera.get_frame()
+        try:
+            frame = self.camera.get_frame()
+        except:
+            return
 
         if frame is None:
             return

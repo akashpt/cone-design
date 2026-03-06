@@ -5,8 +5,6 @@ import sys
 import platform
 import numpy as np
 
-import os
-import sys
 from camera_sdk.mindvision_sdk import mvsdk
 
 
@@ -24,11 +22,13 @@ class MindVisionCamera:
     # ==========================
     def start(self):
 
+        # restart if already running
         if self.hCamera:
-            print("MindVision already started")
-            return
+            print("Camera already running. Restarting...")
+            self.stop()
 
         devs = mvsdk.CameraEnumerateDevice()
+
         if not devs:
             print("No MindVision camera found")
             return
@@ -60,10 +60,15 @@ class MindVisionCamera:
 
         # Manual exposure
         mvsdk.CameraSetAeState(self.hCamera, 0)
-        mvsdk.CameraSetExposureTime(self.hCamera, 10000)
+        mvsdk.CameraSetExposureTime(self.hCamera, 640680)
 
         # Start streaming
-        mvsdk.CameraPlay(self.hCamera)
+        try:
+            mvsdk.CameraPlay(self.hCamera)
+        except mvsdk.CameraException as e:
+            print("CameraPlay Failed:", e)
+            self.stop()
+            return
 
         # Allocate buffer
         self.frame_buffer_size = (
@@ -83,15 +88,15 @@ class MindVisionCamera:
     # ==========================
     def stop(self):
 
-        if self.hCamera:
+        if self.hCamera != 0:
             try:
                 mvsdk.CameraUnInit(self.hCamera)
-            except:
-                pass
+            except mvsdk.CameraException as e:
+                print("CameraUnInit error:", e)
 
             self.hCamera = 0
 
-        if self.pFrameBuffer:
+        if self.pFrameBuffer is not None:
             try:
                 mvsdk.CameraAlignFree(self.pFrameBuffer)
             except:
@@ -106,12 +111,12 @@ class MindVisionCamera:
     # ==========================
     def get_frame(self):
 
-        if not self.hCamera:
+        if self.hCamera == 0:
             return None
 
         try:
             pRawData, FrameHead = mvsdk.CameraGetImageBuffer(
-                self.hCamera, 200
+                self.hCamera, 1000
             )
 
             mvsdk.CameraImageProcess(
@@ -150,5 +155,16 @@ class MindVisionCamera:
             return frame.copy()
 
         except mvsdk.CameraException as e:
+
+            # ignore timeout errors
+            if e.error_code == -12:
+                return None
+
             print("Grab error:", e)
             return None
+
+    # ==========================
+    # AUTO RELEASE CAMERA
+    # ==========================
+    def __del__(self):
+        self.stop()

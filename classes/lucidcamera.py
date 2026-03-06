@@ -78,4 +78,10 @@ class LucidCamera:
 
         return frame
 
-       
+    def set_exposure(self, value):
+
+        if self.device is None:
+            print("Lucid camera device not available")
+            return
+
+        self.device.nodemap["ExposureTime"].value = value

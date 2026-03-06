@@ -332,12 +332,15 @@ class HikRobotCamera:
             return stFloat.fCurValue if ret == 0 else 0.0
         except: return 0.0
 
-    def set_exposure(self, val):
-        if not self.cam: return
-        try:
-            self.cam.MV_CC_SetFloatValue("ExposureTime", float(val))
-        except Exception as e:
-            print(f"⚠️ Failed to set exposure: {e}")
+    # def set_exposure(self, val):
+    #     if not self.cam: return
+    #     try:
+    #         self.cam.MV_CC_SetFloatValue("ExposureTime", float(val))
+    #     except Exception as e:
+    #         print(f"⚠️ Failed to set exposure: {e}")
+
+    def set_exposure(self, value):
+        self.cam.MV_CC_SetFloatValue("ExposureTime", value)       
 
 
 # =========================================================

@@ -168,3 +168,8 @@ class MindVisionCamera:
     # ==========================
     def __del__(self):
         self.stop()
+
+
+    def set_exposure(self, value):
+        # CameraSetExposureTime(self.hCamera, value)
+        mvsdk.CameraSetExposureTime(self.hCamera, value)

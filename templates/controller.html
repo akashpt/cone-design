@@ -372,15 +372,14 @@
                 <button class="ev-btn" id="evMinus" title="Decrease">−</button>
 
                 <div class="ev-slider-wrap">
-                  <input
-                    type="range"
-                    class="ev-slider"
-                    id="evSlider"
-                    min="-2.0"
-                    max="2.0"
-                    step="0.1"
-                    value="0.0"
-                  />
+                 <input
+                  type="range"
+                  class="ev-slider"
+                  id="evSlider"
+                  min="10"
+                  max="300000"
+                  step="10"
+                  value="5000"/>
                   <div class="ev-scale">
                     <span>−2</span>
                     <span>−1</span>
@@ -426,14 +425,13 @@
       // ─── Dynamic Exposure Slider ───
 
       // ─── Searchable Camera Dropdown ───
-      const cameras = [
-        { value: "0", label: "Camera 1 – Main USB / Built-in" },
-        { value: "1", label: "Camera 2 – USB PTZ" },
-        { value: "2", label: "Camera 3 – IP Camera (RTSP)" },
-        { value: "3", label: "Camera 4 – HDMI Capture Card" },
-        { value: "4", label: "Camera 5 – GigE Industrial" },
-        { value: "5", label: "Camera 6 – Basler USB3" },
-      ];
+        const cameras = [
+      { value: "webcam", label: "Webcam" },
+      { value: "hikrobot", label: "HikRobot Camera" },
+      { value: "lucid", label: "Lucid Camera" },
+      { value: "rtsp", label: "RTSP / IP Camera" },
+      { value: "mindvision", label: "MindVision Camera" },
+    ];
 
       const searchInput = document.getElementById("cameraSearch");
       const optionsList = document.getElementById("cameraOptions");

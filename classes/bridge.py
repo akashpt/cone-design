@@ -129,7 +129,36 @@ class Bridge(QObject):
             self.controller_access = False
             self.app_ref.load_page("index.html")
 
-    # -------- CAMERA ----------
+# -------- CAMERA ----------
+
+    @pyqtSlot(str)
+    def selectCamera(self, cam_type):
+
+        print("Camera Selected from UI:", cam_type)
+
+        # stop running camera
+        self.stop_camera()
+
+        # set new camera type
+        self.camera_type = cam_type
+
+        print("Camera type set to:", self.camera_type)
+
+
+    @pyqtSlot(str)
+    def setExposure(self, exposure):
+
+        print("Exposure received from UI:", exposure)
+
+        self.exposure_value = float(exposure)
+
+        if self.camera:
+            try:
+                self.camera.set_exposure(self.exposure_value)
+                print("Exposure applied")
+            except Exception as e:
+                print("Exposure apply failed:", e)
+
     @pyqtSlot()
     def startCamera(self):
 
@@ -207,7 +236,38 @@ class Bridge(QObject):
         self.count =count
         self.yarn =yarn
         self.save_training_settings(material, count, yarn, model)
-              
+
+    @pyqtSlot(str, str)
+    def saveControllerSettings(self, camera, exposure):
+
+        print("Saving Controller Settings")
+
+        # Stop camera before changing settings
+        self.stop_camera()
+
+        # Save camera type
+        self.camera_type = camera
+
+        # Convert exposure to float
+        self.exposure_value = float(exposure)
+
+        print("Camera:", self.camera_type)
+        print("Exposure:", self.exposure_value)
+
+      
+
+        # try:
+        #     self.start_camera()
+        # except:
+        #     print("Camera start failed")
+
+        # Apply exposure after camera start
+        if self.camera:
+            try:
+                self.camera.set_exposure(self.exposure_value)
+                print("Exposure applied")
+            except Exception as e:
+                print("Exposure set failed:", e)
 
     # -------- NAVIGATION ----------
     @pyqtSlot()
@@ -275,8 +335,15 @@ class Bridge(QObject):
             print("Camera failed to start")
             self.camera = None
             return
-
         print(f"Starting camera: {self.camera_type}")
+
+        if hasattr(self, "exposure_value") and self.camera:
+            try:
+                self.camera.set_exposure(self.exposure_value)
+            except:
+                print("Exposure not applied (camera not ready)")
+
+  
 
         # start frame timer
         self.timer.start(self.current_interval)

@@ -49,9 +49,27 @@ document.addEventListener("DOMContentLoaded", function () {
             };
         }
 
+       
+        // CAMERA SELECT
+        if (cameraValue) {
+            cameraValue.addEventListener("change", function () {
+
+                const cam = cameraValue.value;
+
+                console.log("Selected Camera:", cam);
+
+                if (bridge.selectCamera) {
+                    bridge.selectCamera(cam);
+                }
+
+            });
+        }
+
     });
 
 });
+
+
 
  function openControllerModal() {
 
@@ -69,6 +87,26 @@ function submitControllerPassword(){
         bridge.sendPassword(password);
     }
 
+}
+const saveBtn = document.getElementById("saveSettingsBtn");
+
+if (saveBtn) {
+    saveBtn.onclick = function () {
+
+        const camera = document.getElementById("cameraValue").value;
+        const exposure = document.getElementById("evSlider").value;
+
+        bridge.setExposure(exposure);
+
+        console.log("Saving Settings:");
+        console.log("Camera:", camera);
+        console.log("Exposure:", exposure);
+
+        if (bridge && bridge.saveControllerSettings) {
+            bridge.saveControllerSettings(camera, exposure);
+        }
+
+    };
 }
 
 

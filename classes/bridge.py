@@ -39,15 +39,15 @@ class TrainingWorker(QObject):
     status = pyqtSignal(str)
     finished = pyqtSignal()
 
-    def __init__(self, bridge, settings_json: str, interval_ms: int = 2000):
+    def __init__(self, bridge, interval_ms=2000):
         super().__init__()
         self.bridge = bridge
-        self.settings_json = settings_json
         self.interval_ms = interval_ms
         self._running = False
 
     @pyqtSlot()
     def run(self):
+
         self._running = True
         self.status.emit("🟢 Continuous Training Started")
 
@@ -204,12 +204,22 @@ class Bridge(QObject):
         self.current_interval = 30
         self.timer.start(self.current_interval)
 
-
     @pyqtSlot(str)
     def startContinuousTraining(self, settings):
 
         print("Continuous training started")
         print("Received settings:", settings)
+
+        # convert JSON string → python dict
+        settings_data = json.loads(settings)
+
+        self.material = settings_data["material"]
+        self.count = settings_data["count"]
+        self.yarn = settings_data["yarn"]
+
+        # print("Material:", self.material)
+        # print("Count:", self.count)
+        # print("Yarn:", self.yarn)
 
         self.training_active = True
         self.last_count_signal = 0
@@ -217,11 +227,21 @@ class Bridge(QObject):
         # slower capture for training
         self.current_interval = 500
 
+        # start camera
         self.start_camera()
+
+        # start training worker
+        self.start_training_process()
 
     @pyqtSlot()
     def stopContinuousTraining(self):
-       self.training_active = False
+
+        self.training_active = False
+
+        if self.training_worker:
+            self.training_worker.stop()
+
+        print("Training stopped")
 #--------------------------------------------
             
     @pyqtSlot(str, str, str)
@@ -461,7 +481,30 @@ class Bridge(QObject):
     # --------- TRAINING CONTROL ----------
  
     def start_training_process(self):
-      print("Running training process...")   
+
+        if self.training_thread:
+            print("Training already running")
+            return
+
+        print("Starting training worker thread")
+
+        self.training_thread = QThread()
+
+        self.training_worker = TrainingWorker(self)
+
+        self.training_worker.moveToThread(self.training_thread)
+
+        # thread start
+        self.training_thread.started.connect(self.training_worker.run)
+
+        # thread finish cleanup
+        self.training_worker.finished.connect(self.training_thread.quit)
+        self.training_worker.finished.connect(self.training_worker.deleteLater)
+        self.training_thread.finished.connect(self.training_thread.deleteLater)
+
+        self.training_thread.start()
+
+        self.training_active = True  
 
     def save_training_settings(self, material, count, yarn, model):
         data={

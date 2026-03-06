@@ -58,6 +58,92 @@
           flex-direction: column;
         }
       }
+    .modal {
+    position: fixed;           /* Must be fixed to cover viewport */
+    inset: 0;                  /* Shorthand for top:0; right:0; bottom:0; left:0; */
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.65);
+    display: none;             /* hidden by default */
+    align-items: center;       /* vertical center */
+    justify-content: center;   /* horizontal center */
+    z-index: 2000;
+  }
+
+  /* VERY IMPORTANT: when you show it, force flex again */
+  .modal.visible,
+  .modal[style*="display: flex"],
+  .modal.show {                /* add any class you use to show it */
+    display: flex !important;
+  }
+
+  .modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 440px;          /* slightly wider feels nicer */
+    max-height: 90vh;          /* prevent overflow on small screens */
+    overflow-y: auto;          /* scroll inside if content is long */
+    position: relative;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+    transform: scale(0.95);    /* subtle entrance feel — optional */
+    transition: transform 0.2s ease;
+  }
+
+  /* Optional: nicer appearance when visible */
+  .modal.visible .modal-content {
+    transform: scale(1);
+  }
+        .modal-close {
+          position: absolute;
+          top: 12px;
+          right: 16px;
+          font-size: 28px;
+          cursor: pointer;
+          color: #777;
+        }
+
+        .modal-close:hover {
+          color: #333;
+        }
+
+        .modal-field {
+          margin: 1.5rem 0;
+        }
+
+        .modal-field label {
+          display: block;
+          margin-bottom: 0.5rem;
+          font-weight: 500;
+        }
+
+        .modal-field input {
+          width: 100%;
+          padding: 10px 12px;
+          border: 1px solid #ddd;
+          border-radius: 6px;
+          font-size: 1rem;
+        }
+
+        .modal-buttons {
+          display: flex;
+          gap: 12px;
+          justify-content: flex-end;
+          margin-top: 1.5rem;
+        }
+
+        .modal-error {
+          text-align: center;
+        }
+
+        .btn-cancel {
+          background: #95a5a6 !important;
+        }
+
+        .btn-submit {
+          background: var(--primary) !important;
+        }
     </style>
   </head>
 
@@ -90,7 +176,7 @@
           </div>
         </a>
 
-        <div class="menu-item" onclick="bridge.goController()">
+        <div class="menu-item" onclick="openControllerModal()">
           <i class="fa-solid fa-sliders"></i> CONTROLLER
         </div>
 
@@ -338,6 +424,44 @@
       <span id="toastMsg">Done.</span>
     </div>
 
+
+    
+    <!-- Controller Password Modal -->
+    <div id="controllerModal" class="modal" style="display: none">
+      <div class="modal-content">
+        <span class="modal-close" onclick="closeControllerModal()">×</span>
+        <h2>Controller Access</h2>
+        <p>Please enter the password to access controller settings.</p>
+
+        <div class="modal-field">
+          <label for="controllerPassword">Password</label>
+          <input
+            type="password"
+            id="controllerPassword"
+            placeholder="Enter password"
+            autocomplete="off"
+            
+          />
+        </div>
+     
+        <div class="modal-buttons">
+         
+          <button class="btn-main btn-cancel" onclick="closeControllerModal()">
+            Cancel
+          </button>
+          <button onclick="submitControllerPassword()">Submit</button>
+        </div>
+
+        <p
+          id="modalError"
+          class="modal-error"
+          style="display: none; color: #e74c3c; margin-top: 12px"
+        >
+          Incorrect password. Please try again.
+        </p>
+      </div>
+    </div>
+
     <script src="../static/script/traning.js"></script>
 
     <script>
@@ -366,5 +490,51 @@
         { passive: false },
       );
     </script>
+   <script>
+      function openControllerPassword() {
+
+    const password = prompt("Enter Controller Password");
+
+    if(password && window.bridge){
+        bridge.sendPassword(password);
+    }
+
+}
+
+  function openControllerModal() {
+    const modal = document.getElementById('controllerModal');
+    const input = document.getElementById('controllerPassword');
+    const error = document.getElementById('modalError');
+    
+    if (modal) {
+      modal.style.display = 'flex';   // ← This line is critical!
+      input.value = '';
+      error.style.display = 'none';
+      input.focus();
+      
+      // Optional: add class for animation
+      setTimeout(() => modal.classList.add('visible'), 10);
+  }
+}
+function closeControllerModal() {
+  const modal = document.getElementById('controllerModal');
+  if (modal) {
+    modal.classList.remove('visible');
+    modal.style.display = 'none';
+  }
+}
+ 
+function submitControllerPassword(){
+
+    const password = document.getElementById("controllerPassword").value;
+
+    if(!password) return;
+
+    if(window.bridge){
+        bridge.sendPassword(password);
+    }
+
+}
+</script>
   </body>
 </html>

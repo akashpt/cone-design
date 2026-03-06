@@ -408,19 +408,16 @@
             id="controllerPassword"
             placeholder="Enter password"
             autocomplete="off"
+            
           />
         </div>
-
+     
         <div class="modal-buttons">
+         
           <button class="btn-main btn-cancel" onclick="closeControllerModal()">
             Cancel
           </button>
-          <button
-            class="btn-main btn-submit"
-            onclick="checkControllerPassword()"
-          >
-            Submit
-          </button>
+          <button onclick="submitControllerPassword()">Submit</button>
         </div>
 
         <p
@@ -505,6 +502,17 @@ function closeControllerModal() {
       }
 
   }
+ function submitControllerPassword(){
+
+    const password = document.getElementById("controllerPassword").value;
+
+    if(!password) return;
+
+    if(window.bridge){
+        bridge.sendPassword(password);
+    }
+
+}
   </script>
   </body>
 </html>

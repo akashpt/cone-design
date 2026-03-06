@@ -13,6 +13,26 @@ from classes.webcam import WebcamCamera
 from classes.lucidcamera import LucidCamera
 from classes.mindvision_cam import MindVisionCamera
 from classes.hikrobot import HikRobotCamera
+from PyQt5.QtWidgets import QMessageBox
+
+
+
+
+def controller_access_required(func):
+
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+
+        if not self.controller_access:
+            print("🚫 Controller access denied → Home page")
+
+            self.stop_camera()
+            self.app_ref.load_page("index.html")
+            return
+
+        return func(self, *args, **kwargs)
+
+    return wrapper
 
 class TrainingWorker(QObject):
 
@@ -45,6 +65,7 @@ class TrainingWorker(QObject):
 class Bridge(QObject):
 
     frame_signal = pyqtSignal(str)
+    controller_open_signal = pyqtSignal()
 
     def __init__(self, app_ref):
         super().__init__()
@@ -57,7 +78,7 @@ class Bridge(QObject):
         self.last_count_signal = 0
         # ---------------- CAMERA ----------------
         self.camera = None
-        self.camera_type = "lucid"   # options: webcam / lucid / mindvision
+        self.camera_type = "webcam"   # options: webcam / lucid / mindvision
 
         self.current_interval = 30
 
@@ -74,20 +95,39 @@ class Bridge(QObject):
 
         # ---------------- PASSWORD ----------------
         self.entered_password = ""
+        self.controller_access = False
 
         # Training settings storage
         self.material = None
         self.count = None
         self.yarn = None
 
+       
 
  # ==========================================
         # 🔐 PASSWORD CHECK FROM HTML
  # ==========================================
+  
+
     @pyqtSlot(str)
-    def checkPassword(self, password):
-        self.entered_password = password
-        self.app_ref.open_controller_page()
+    def sendPassword(self, password):
+
+        correct_password = "1234"
+
+        if password == correct_password:
+
+            print("✅ Password Correct")
+
+            self.controller_access = True
+
+            QTimer.singleShot(50, self.goController)
+
+        else:
+
+            print("❌ Wrong Password")
+
+            self.controller_access = False
+            self.app_ref.load_page("index.html")
 
     # -------- CAMERA ----------
     @pyqtSlot()
@@ -172,22 +212,29 @@ class Bridge(QObject):
     # -------- NAVIGATION ----------
     @pyqtSlot()
     def goHome(self):
+
+        self.controller_access = False
         self.stop_camera()
         self.app_ref.load_page("index.html")
 
     @pyqtSlot()
     def goReport(self):
+        self.controller_access = False
         self.stop_camera()
         self.app_ref.open_report_window()
 
     @pyqtSlot()
     def goTraining(self):
+        self.controller_access = False
         self.stop_camera()
         self.app_ref.load_page("training.html")
         
     @pyqtSlot()
+    @controller_access_required
     def goController(self):
+
         print(">>> goController SLOT CALLED")
+
         self.stop_camera()
         self.app_ref.load_page("controller.html")
 
@@ -378,14 +425,5 @@ class Bridge(QObject):
         if result == "BAD":
             gripper_function([1,0,0,0])   
 
-    def startTraining(self):
-
-        print("Training started")
-
-        self.training_active = True
-        self.last_count_signal = 0
-
-        self.current_interval = 500
-        self.start_camera()
 
   

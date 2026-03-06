@@ -1,25 +1,11 @@
 # app.py
 import sys
-import os
-
 from PyQt5.QtWidgets import QApplication ,QMainWindow
 from PyQt5.QtCore import QTimer, QUrl ,pyqtSlot ,Qt
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWebChannel import QWebChannel
-
 from classes.bridge import Bridge
-import time
-import numpy as np
-from functools import wraps
-
-from PyQt5.QtWidgets import QMessageBox
-
-
-import classes.sdk_setup as sdk_setup
-sdk_setup.setup_sdk()
-
-from arena_api.system import system
 from path import TEMPLATES_DIR
 
 

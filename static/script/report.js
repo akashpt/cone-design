@@ -15,6 +15,15 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 });
+function submitControllerPassword() {
+
+    let password = document.getElementById("controllerPassword").value;
+
+    if (window.bridge) {
+        window.bridge.sendPassword(password);
+    }
+
+}
 // Date
 document.getElementById("reportDate").textContent =
   new Date().toLocaleDateString("en-IN", {

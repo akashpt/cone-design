@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
 
-    if (typeof qt !== "undefined") {
+    if (typeof qt !== "undefined" && qt.webChannelTransport) {
 
         new QWebChannel(qt.webChannelTransport, function (channel) {
 
@@ -8,16 +8,17 @@ document.addEventListener("DOMContentLoaded", function () {
             console.log("Bridge connected");
 
             // camera frames
-            bridge.frame_signal.connect(function (imageData) {
+              bridge.frame_signal.connect((imageData) => {
 
-                const img = document.getElementById("video");
+        const img = document.getElementById("video");
 
-                if (img) {
-                    img.src = "data:image/jpeg;base64," + imageData;
-                }
+        if (!img) return;   // page changed, ignore
 
-            });
+        img.src = "data:image/jpeg;base64," + imageData;
 
+    });
+
+       
             // report button
             const report = document.getElementById("menuReport");
 
@@ -32,8 +33,23 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 });
+window.addEventListener("beforeunload", function () {
 
+    if (window.bridge && bridge.stopCamera) {
+        bridge.stopCamera();
+    }
 
+});
+
+function openControllerModal() {
+
+    const password = prompt("Enter Controller Password");
+
+    if(password && window.bridge){
+        bridge.sendPassword(password);
+    }
+
+}
   // ────────────────────────────────────────────────
   //  Time & Toast
   // ────────────────────────────────────────────────

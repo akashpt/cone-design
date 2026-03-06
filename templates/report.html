@@ -64,6 +64,7 @@
             >
               <i class="fas fa-download"></i> Export PDF
             </button>
+            <button onclick="openControllerModal()">Controller</button>
           </div>
         </div>
 
@@ -147,9 +148,71 @@
     </div>
     <!-- /layout -->
 
+
+    
+    <!-- Controller Password Modal -->
+    <div id="controllerModal" class="modal" style="display: none">
+      <div class="modal-content">
+        <span class="modal-close" onclick="closeControllerModal()">×</span>
+        <h2>Controller Access</h2>
+        <p>Please enter the password to access controller settings.</p>
+
+        <div class="modal-field">
+          <label for="controllerPassword">Password</label>
+          <input
+            type="password"
+            id="controllerPassword"
+            placeholder="Enter password"
+            autocomplete="off"
+            
+          />
+        </div>
+     
+        <div class="modal-buttons">
+         
+          <button class="btn-main btn-cancel" onclick="closeControllerModal()">
+            Cancel
+          </button>
+          <button onclick="submitControllerPassword()">Submit</button>
+        </div>
+
+        <p
+          id="modalError"
+          class="modal-error"
+          style="display: none; color: #e74c3c; margin-top: 12px"
+        >
+          Incorrect password. Please try again.
+        </p>
+      </div>
+    </div>
+
     <!-- TOAST -->
     <div id="toast" class="toast"><span id="toastMsg"></span></div>
     <script src="../static/script/chart.umd.min.js"></script>
     <script src="../static/script/report.js"></script>
+<script>
+      function openControllerModal() {
+    const modal = document.getElementById('controllerModal');
+    const input = document.getElementById('controllerPassword');
+    const error = document.getElementById('modalError');
+    
+    if (modal) {
+      modal.style.display = 'flex';   // ← This line is critical!
+      input.value = '';
+      error.style.display = 'none';
+      input.focus();
+      
+      // Optional: add class for animation
+      setTimeout(() => modal.classList.add('visible'), 10);
+  }
+}
+function closeControllerModal() {
+  const modal = document.getElementById('controllerModal');
+  if (modal) {
+    modal.classList.remove('visible');
+    modal.style.display = 'none';
+  }
+}
+</script>
   </body>
 </html>

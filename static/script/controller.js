@@ -30,18 +30,17 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         // CONTROLLER (PASSWORD REQUIRED)
-        if (controller) {
-            controller.onclick = function () {
+            if (controller) {
+        controller.onclick = function () {
 
-                let password = prompt("Enter Password");
+            let password = prompt("Enter Password");
 
-                if (password !== null) {
-                    bridge.sendPassword(password);   // send password to python
-                    setTimeout(() => bridge.goController(), 0);
-                }
+            if (password !== null && window.bridge) {
+                bridge.sendPassword(password);
+            }
 
-            };
-        }
+        };
+    }
 
         // TRAINING
         if (training) {
@@ -54,8 +53,23 @@ document.addEventListener("DOMContentLoaded", function () {
 
 });
 
+ function openControllerModal() {
 
+    document.getElementById("controllerModal").style.display = "block";
 
+}
+
+function submitControllerPassword(){
+
+    const password = document.getElementById("controllerPassword").value;
+
+    if(!password) return;
+
+    if(window.bridge){
+        bridge.sendPassword(password);
+    }
+
+}
 
 
 window.addEventListener("load", () => {

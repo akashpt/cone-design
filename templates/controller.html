@@ -596,29 +596,8 @@
       // Init
       update(0, "both");
     </script>
+ 
 
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-
-    if (typeof qt !== "undefined") {
-
-        new QWebChannel(qt.webChannelTransport, function (channel) {
-
-            window.bridge = channel.objects.bridge;
-            console.log("Bridge connected");
-
-            const report = document.getElementById("menuReport");
-            if (report) {
-                report.onclick = function () {
-                    bridge.goReport();
-                };
-            }
-
-        });
-
-    }
-
-});
 </script>
   </body>
 </html>

@@ -226,6 +226,7 @@ class Bridge(QObject):
 
         # slower capture for training
         self.current_interval = 500
+        
 
         # start camera
         self.start_camera()

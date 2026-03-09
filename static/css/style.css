@@ -1009,7 +1009,7 @@ select.filled {
   background: white;
   border-radius: 12px;
   width: 100%;
-  max-width: 550px;
+  max-width: 650px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
   overflow: hidden;
 }

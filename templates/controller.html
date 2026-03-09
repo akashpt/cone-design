@@ -10,6 +10,19 @@
     <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
 
     <style>
+      .text-center {
+        text-align: center;
+      }
+      .text-end {
+        text-align: end;
+      }
+      .pb-4 {
+        padding-bottom: 15px;
+      }
+      .pt-4 {
+        padding-top: 15px;
+      }
+
       :root {
         --font-sans: "Inter", sans-serif;
         --primary: #722f37;
@@ -40,11 +53,13 @@
         height: fit-content;
         width: 100%;
       }
+
       .camera-settings-flex {
         display: flex;
-
         justify-content: space-between;
+        gap: 40px;
       }
+
       h3 {
         margin: 0 0 24px 0;
         color: var(--primary);
@@ -119,22 +134,15 @@
         color: var(--primary);
       }
 
-      .field-label {
-        font-size: 0.9rem;
-        font-weight: 500;
-        color: var(--text);
-        margin-bottom: 12px;
-      }
-
       /* ── Exposure Row ── */
-      .ev-row {
+      .exposure-row {
         display: flex;
         align-items: center;
         gap: 12px;
       }
 
       /* ── Stepper buttons ── */
-      .ev-btn {
+      .exp-btn {
         width: 36px;
         height: 36px;
         border-radius: 8px;
@@ -152,27 +160,28 @@
           border-color 0.15s,
           background 0.15s,
           color 0.15s;
-        line-height: 1;
         user-select: none;
       }
 
-      .ev-btn:hover {
+      .exp-btn:hover {
         border-color: var(--primary);
         color: var(--primary);
         background: var(--primary-xl);
       }
 
-      .ev-btn:active {
+      .exp-btn:active {
         transform: scale(0.93);
       }
 
       /* ── Slider ── */
-      .ev-slider-wrap {
+      .exp-slider-wrap {
         flex: 1;
         position: relative;
+        margin-right: 20px;
+        margin-left: 20px;
       }
 
-      .ev-slider {
+      .exp-slider {
         -webkit-appearance: none;
         appearance: none;
         width: 100%;
@@ -180,10 +189,11 @@
         border-radius: 999px;
         outline: none;
         cursor: pointer;
-        transition: background 0.15s;
+        background: #e2e6ea;
+        transition: background 0.2s;
       }
 
-      .ev-slider::-webkit-slider-thumb {
+      .exp-slider::-webkit-slider-thumb {
         -webkit-appearance: none;
         width: 20px;
         height: 20px;
@@ -197,12 +207,12 @@
           box-shadow 0.15s;
       }
 
-      .ev-slider::-webkit-slider-thumb:hover {
+      .exp-slider::-webkit-slider-thumb:hover {
         transform: scale(1.1);
         box-shadow: 0 2px 10px rgba(114, 47, 55, 0.25);
       }
 
-      .ev-slider::-moz-range-thumb {
+      .exp-slider::-moz-range-thumb {
         width: 20px;
         height: 20px;
         border-radius: 50%;
@@ -212,9 +222,9 @@
         cursor: pointer;
       }
 
-      /* ── Type input ── */
-      .ev-input {
-        width: 72px;
+      /* ── Number input ── */
+      .exp-input {
+        width: 110px;
         height: 36px;
         border: 1.5px solid var(--border);
         border-radius: 8px;
@@ -229,56 +239,56 @@
         transition:
           border-color 0.15s,
           box-shadow 0.15s;
+        margin-left: 20px;
       }
 
-      .ev-input:focus {
+      .exp-input:focus {
         border-color: var(--primary);
         box-shadow: 0 0 0 3px rgba(114, 47, 55, 0.1);
       }
 
-      /* ── Scale ticks below slider ── */
-      .ev-scale {
+      /* ── Scale ticks ── */
+      .exp-scale {
         display: flex;
         justify-content: space-between;
         margin-top: 6px;
         padding: 0 1px;
       }
 
-      .ev-scale span {
+      .exp-scale span {
         font-size: 0.72rem;
         color: var(--muted);
         font-family: monospace;
       }
 
-      .ev-scale span.center {
+      .exp-scale span.center {
         font-weight: 600;
         color: var(--primary);
       }
 
-      /* ── Help text ── */
       .help {
         font-size: 0.8rem;
         color: var(--muted);
         margin-top: 10px;
       }
+
       .save_btn {
         border: 1px solid var(--primary);
         background: var(--primary);
         color: white;
-        padding: 10px 20px;
-        border-radius: 5px;
+        padding: 10px 24px;
+        border-radius: 8px;
         cursor: pointer;
+        font-weight: 500;
       }
+
       .save_btn:hover {
-       
-        background: var(--bg);
+        background: white;
         color: var(--primary);
       }
     </style>
   </head>
   <body>
-    <!-- Loader, sidebar, header, toast remain the same -->
-
     <div id="loaderDots" class="dots-loader">
       <div class="dot"></div>
       <div class="dot"></div>
@@ -288,29 +298,29 @@
     <aside>
       <div class="logo-area">
         <div class="logo_div">
-          <a href="index.html">
-            <img src="../static/img/logo.png" alt="Logo" />
-          </a>
+          <a href="index.html"
+            ><img src="../static/img/logo.png" alt="Logo"
+          /></a>
         </div>
       </div>
       <div class="menu-section">
         <div class="menu-label">Navigation</div>
-        <a href="index.html"  >
-         <div class="menu-item" id="menuHome">
-            <i class="fa-solid fa-house"></i> HOME</div>
-        </a>
-       <div class="menu-item" id="menuReport"> 
+        <a href="index.html"
+          ><div class="menu-item" id="menuHome">
+            <i class="fa-solid fa-house"></i> HOME
+          </div></a
+        >
+        <div class="menu-item" id="menuReport">
           <i class="fa-solid fa-chart-simple"></i> REPORT
-          </div>
-        </a>
-       <div class="menu-item active" id="menuController">
+        </div>
+        <div class="menu-item active" id="menuController">
           <i class="fa-solid fa-sliders"></i> CONTROLLER
         </div>
-        <a href="training.html" >
-          <div class="menu-item" id="menuTraining">
+        <a href="training.html"
+          ><div class="menu-item" id="menuTraining">
             <i class="fa-solid fa-microchip"></i> TRAINING
-          </div>
-        </a>
+          </div></a
+        >
         <div class="menu-label" style="margin-top: 4px">System</div>
         <div class="menu-item"><i class="fa-solid fa-gear"></i> SETTINGS</div>
       </div>
@@ -323,6 +333,7 @@
         </div>
       </div>
     </aside>
+
     <main>
       <header>
         <div class="header-left">
@@ -334,8 +345,7 @@
           <span id="statusText">WAITING</span>
         </div>
         <div class="header-right">
-          <span id="liveTime">--/--/---- — --:--:--</span>
-          <div class="header-user">
+           <div class="header-user">
             <i
               class="fa-solid fa-user"
               style="opacity: 0.8; font-size: 0.68rem"
@@ -346,12 +356,12 @@
 
       <div class="content" style="padding: 32px 24px">
         <div class="camera-settings">
-          <div class="camera-settings-flex">
-            <div>
-              <h3>Camera Setup</h3>
+          <h3 class="text-center">Camera Setup</h3>
 
+          <div class="camera-settings-flex">
+            <div style="max-width: 420px">
+              <h3>Select Camera</h3>
               <div class="field">
-                <label>Select Camera</label>
                 <div class="custom-select-container">
                   <input
                     type="text"
@@ -365,48 +375,46 @@
                 </div>
               </div>
             </div>
-            <div>
-              <h3>Exposure Compensation</h3>
 
-              <div class="ev-row">
-                <button class="ev-btn" id="evMinus" title="Decrease">−</button>
+            <div style="width: 700px">
+              <h3>Exposure Time</h3>
 
-                <div class="ev-slider-wrap">
-                 <input
-                  type="range"
-                  class="ev-slider"
-                  id="evSlider"
-                  min="10"
-                  max="300000"
-                  step="10"
-                  value="5000"/>
-                  <div class="ev-scale">
-                    <span>−2</span>
-                    <span>−1</span>
-                    <span class="center">0</span>
-                    <span>+1</span>
-                    <span>+2</span>
-                  </div>
+              <div class="exposure-row">
+                <button class="exp-btn" id="expMinus" title="Decrease">
+                  −
+                </button>
+
+                <div class="exp-slider-wrap">
+                  <input
+                    type="range"
+                    class="exp-slider"
+                    id="expSlider"
+                    min="10"
+                    max="1000000"
+                    step="10"
+                    value="5000"
+                  />
+                  <div class="exp-scale" id="expScale"></div>
                 </div>
 
-                <button class="ev-btn" id="evPlus" title="Increase">+</button>
+                <button class="exp-btn" id="expPlus" title="Increase">+</button>
 
                 <input
                   type="text"
-                  class="ev-input"
-                  id="evInput"
-                  value="0.0"
-                  maxlength="5"
+                  class="exp-input"
+                  id="expInput"
+                  value="5000"
+                  maxlength="12"
                 />
               </div>
 
-              <div class="help">
-                Range: −2.0 to +2.0 EV &nbsp;·&nbsp; Step: 0.1 &nbsp;·&nbsp;
-                Type a value or drag the slider
+              <div class="help" id="rangeHelp">
+                Select a camera to see supported exposure range
               </div>
             </div>
           </div>
-          <div>
+
+          <div class="text-end pt-4 pb-4">
             <button class="save_btn" id="saveSettingsBtn">Save Settings</button>
           </div>
         </div>
@@ -420,23 +428,151 @@
 
     <script src="../static/script/controller.js"></script>
 
-
     <script>
-      // ─── Dynamic Exposure Slider ───
+      // ─── Camera list ───────────────────────────────────────
+      const cameras = [
+        { value: "webcam", label: "Webcam" },
+        { value: "hikrobot", label: "HikRobot Camera" },
+        { value: "lucid", label: "Lucid Camera" },
+        { value: "rtsp", label: "RTSP / IP Camera" },
+        { value: "mindvision", label: "MindVision Camera" },
+      ];
 
-      // ─── Searchable Camera Dropdown ───
-        const cameras = [
-      { value: "webcam", label: "Webcam" },
-      { value: "hikrobot", label: "HikRobot Camera" },
-      { value: "lucid", label: "Lucid Camera" },
-      { value: "rtsp", label: "RTSP / IP Camera" },
-      { value: "mindvision", label: "MindVision Camera" },
-    ];
+      // ─── Exposure ranges per camera ────────────────────────
+      const exposureRanges = {
+        webcam: {
+          min: 1,
+          max: 100,
+          unit: "",
+          step: 1,
+          fmt: (v) => v.toString(),
+        },
+        rtsp: {
+          min: 1000,
+          max: 20000,
+          unit: "µs",
+          step: 100,
+          fmt: (v) => v.toString(),
+        },
+        hikrobot: {
+          min: 28,
+          max: 1000000,
+          unit: "µs",
+          step: 10,
+          fmt: (v) => v.toLocaleString(),
+        },
+        lucid: {
+          min: 20,
+          max: 30000000,
+          unit: "µs",
+          step: 10,
+          fmt: (v) => v.toLocaleString(),
+        },
+        mindvision: {
+          min: 10,
+          max: 10000000,
+          unit: "µs",
+          step: 10,
+          fmt: (v) => v.toLocaleString(),
+        },
+        default: {
+          min: 10,
+          max: 1000000,
+          unit: "µs",
+          step: 10,
+          fmt: (v) => v.toLocaleString(),
+        },
+      };
 
+      // ─── DOM elements ──────────────────────────────────────
       const searchInput = document.getElementById("cameraSearch");
       const optionsList = document.getElementById("cameraOptions");
       const hiddenInput = document.getElementById("cameraValue");
+      const slider = document.getElementById("expSlider");
+      const input = document.getElementById("expInput");
+      const minusBtn = document.getElementById("expMinus");
+      const plusBtn = document.getElementById("expPlus");
+      const scale = document.getElementById("expScale");
+      const helpText = document.getElementById("rangeHelp");
 
+      let currentRange = exposureRanges.default;
+
+      // ─── Format number with unit ───────────────────────────
+      function formatValue(v) {
+        return (
+          currentRange.fmt(Math.round(v)) +
+          (currentRange.unit ? " " + currentRange.unit : "")
+        );
+      }
+
+      // ─── Update slider attributes & scale labels ───────────
+      function updateExposureRange(camValue) {
+        currentRange = exposureRanges[camValue] || exposureRanges.default;
+
+        slider.min = currentRange.min;
+        slider.max = currentRange.max;
+        slider.step = currentRange.step;
+
+        // Choose sensible starting value (≈ middle, rounded to step)
+        let startVal =
+          Math.round(
+            (currentRange.min + currentRange.max) / 2 / currentRange.step,
+          ) * currentRange.step;
+        startVal = Math.max(
+          currentRange.min,
+          Math.min(currentRange.max, startVal),
+        );
+
+        slider.value = startVal;
+        input.value = currentRange.fmt(startVal);
+
+        helpText.innerHTML = `Range: ${formatValue(currentRange.min)} – ${formatValue(currentRange.max)}`;
+
+        updateScaleLabels();
+        updateSliderStyle();
+      }
+
+      function updateScaleLabels() {
+        scale.innerHTML = ""; // clear previous labels
+
+        const min = Number(slider.min);
+        const max = Number(slider.max);
+        const mid = (min + max) / 2;
+
+        // Helper to create one label
+        function addLabel(value, isCenter = false) {
+          const rounded =
+            Math.round(value / currentRange.step) * currentRange.step;
+          const safeVal = Math.max(min, Math.min(max, rounded));
+
+          const span = document.createElement("span");
+          span.textContent = formatValue(safeVal);
+          if (isCenter) span.classList.add("center");
+          scale.appendChild(span);
+        }
+
+        // Only three labels: left – center – right
+        addLabel(min, false); // start
+        addLabel(mid, true); // center (will get .center style)
+        addLabel(max, false); // end
+      }
+      function updateSliderStyle() {
+        const val = Number(slider.value);
+        const min = Number(slider.min);
+        const max = Number(slider.max);
+        const pct = max > min ? ((val - min) / (max - min)) * 100 : 0;
+
+        const mid = (min + max) / 2;
+        const color =
+          val < mid ? "#ef4444" : val > mid ? "#3b82f6" : "var(--primary)";
+
+        slider.style.background = `linear-gradient(to right, #e2e6ea 0%, ${color} ${pct}%, #e2e6ea ${pct}%)`;
+
+        input.style.color = val === mid ? "var(--text)" : color;
+        input.style.borderColor = val === mid ? "var(--border)" : color + "88";
+      }
+
+      // ─── UI event handlers ─────────────────────────────────
       function renderOptions(filter = "") {
         optionsList.innerHTML = "";
         const filtered = cameras.filter((c) =>
@@ -463,7 +599,8 @@
             searchInput.value = cam.label;
             hiddenInput.value = cam.value;
             optionsList.classList.remove("show");
-            // bridge.selectCamera?.(cam.value);   // ← connect to Qt if needed
+            updateExposureRange(cam.value);
+            // bridge?.selectCamera?.(cam.value);   // uncomment when Qt bridge is ready
           });
 
           optionsList.appendChild(item);
@@ -489,113 +626,50 @@
         }
       });
 
-      // initial render
-      renderOptions();
-    </script>
-
-    <script>
-      const slider = document.getElementById("evSlider");
-      const input = document.getElementById("evInput");
-      const btnMinus = document.getElementById("evMinus");
-      const btnPlus = document.getElementById("evPlus");
-
-      const MIN = -2.0,
-        MAX = 2.0,
-        STEP = 0.1;
-
-      function clamp(v) {
-        return Math.round(Math.max(MIN, Math.min(MAX, v)) * 10) / 10;
-      }
-
-      function applyColor(val) {
-        const pct = ((val - MIN) / (MAX - MIN)) * 100;
-        let trackColor, thumbColor;
-
-        if (val < 0) {
-          trackColor = `linear-gradient(to right, #fee2e2 0%, #ef4444 ${pct}%, #e2e6ea ${pct}%)`;
-          thumbColor = "#ef4444";
-        } else if (val > 0) {
-          const zeroPct = 50;
-          trackColor = `linear-gradient(to right, #e2e6ea 0%, #e2e6ea ${zeroPct}%, #3b82f6 ${zeroPct}%, #93c5fd ${pct}%, #e2e6ea ${pct}%)`;
-          thumbColor = "#3b82f6";
-        } else {
-          trackColor = "#e2e6ea";
-          thumbColor = "var(--primary)";
-        }
-
-        slider.style.background = trackColor;
-        slider.style.setProperty("--thumb-color", thumbColor);
-
-        // Apply thumb color via border override
-        document.documentElement.style.setProperty("--thumb-c", thumbColor);
-        slider.style.borderColor = thumbColor;
-
-        // Recolor thumb dynamically
-        const style =
-          document.getElementById("dynThumb") ||
-          (() => {
-            const s = document.createElement("style");
-            s.id = "dynThumb";
-            document.head.appendChild(s);
-            return s;
-          })();
-        style.textContent = `
-      #evSlider::-webkit-slider-thumb { border-color: ${thumbColor}; }
-      #evSlider::-moz-range-thumb     { border-color: ${thumbColor}; }
-    `;
-
-        // Input color
-        input.style.color =
-          val < 0 ? "#ef4444" : val > 0 ? "#3b82f6" : "var(--text)";
-        input.style.borderColor =
-          val !== 0 ? (val < 0 ? "#fca5a5" : "#93c5fd") : "var(--border)";
-      }
-
-      function update(val, source) {
-        val = clamp(val);
-        if (source !== "slider") slider.value = val;
-        if (source !== "input") input.value = val.toFixed(1);
-        applyColor(val);
-      }
-
-      slider.addEventListener("input", () =>
-        update(parseFloat(slider.value), "slider"),
-      );
+      // Slider & input sync
+      slider.addEventListener("input", () => {
+        input.value = currentRange.fmt(slider.value);
+        updateSliderStyle();
+      });
 
       input.addEventListener("input", () => {
-        const v = parseFloat(input.value);
-        if (!isNaN(v)) update(v, "input");
+        let v = parseFloat(input.value.replace(/[^0-9]/g, ""));
+        if (isNaN(v)) v = currentRange.min;
+        v = Math.max(currentRange.min, Math.min(currentRange.max, v));
+        slider.value = v;
+        input.value = currentRange.fmt(v);
+        updateSliderStyle();
       });
 
       input.addEventListener("blur", () => {
-        const v = parseFloat(input.value);
-        update(isNaN(v) ? 0 : v, "input");
+        let v = parseFloat(input.value.replace(/[^0-9]/g, ""));
+        if (isNaN(v)) v = currentRange.min;
+        v = Math.round(v / currentRange.step) * currentRange.step;
+        v = Math.max(currentRange.min, Math.min(currentRange.max, v));
+        slider.value = v;
+        input.value = currentRange.fmt(v);
+        updateSliderStyle();
       });
 
-      input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") input.blur();
-        if (e.key === "ArrowUp") {
-          e.preventDefault();
-          update(clamp(parseFloat(slider.value) + STEP), "both");
-        }
-        if (e.key === "ArrowDown") {
-          e.preventDefault();
-          update(clamp(parseFloat(slider.value) - STEP), "both");
-        }
+      minusBtn.addEventListener("click", () => {
+        let v = Number(slider.value) - currentRange.step;
+        v = Math.max(currentRange.min, v);
+        slider.value = v;
+        input.value = currentRange.fmt(v);
+        updateSliderStyle();
       });
 
-      btnMinus.addEventListener("click", () =>
-        update(clamp(parseFloat(slider.value) - STEP), "both"),
-      );
-      btnPlus.addEventListener("click", () =>
-        update(clamp(parseFloat(slider.value) + STEP), "both"),
-      );
+      plusBtn.addEventListener("click", () => {
+        let v = Number(slider.value) + currentRange.step;
+        v = Math.min(currentRange.max, v);
+        slider.value = v;
+        input.value = currentRange.fmt(v);
+        updateSliderStyle();
+      });
 
-      // Init
-      update(0, "both");
+      // ─── Init ──────────────────────────────────────────────
+      renderOptions();
+      updateExposureRange("hikrobot"); // or any default you prefer
     </script>
- 
-
-</script>
   </body>
 </html>

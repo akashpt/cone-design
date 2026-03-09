@@ -95,7 +95,7 @@ function openControllerModal() {
   const modalConfirm = document.getElementById("modalConfirm");
   const modalCancel = document.getElementById("modalCancel");
   const closeModalBtn = document.getElementById("closeModal");
-  const modalTrainedSelect = document.getElementById("modalTrainedSelect");
+  // const modalTrainedSelect = document.getElementById("modalTrainedSelect");
   const newModelInput = document.getElementById("newModelInput");
   const sidebarTrainedSelect = document.getElementById("trainedModelSelect");
 
@@ -163,12 +163,16 @@ function openControllerModal() {
     modalConfirm.disabled = !modalCanStart();
   }
 
-  [modalMaterial, modalCount, modalYarn].forEach((el) => {
-    el.addEventListener("change", () => {
-      el.classList.toggle("filled", !!el.value);
-      updateConfirmButton();
-    });
+ [modalMaterial, modalCount, modalYarn].forEach((el) => {
+
+  if (!el) return;
+
+  el.addEventListener("change", () => {
+    el.classList.toggle("filled", !!el.value);
+    updateConfirmButton();
   });
+
+});
 
   function closeStartModal() {
     startModal.style.display = "none";
@@ -183,115 +187,107 @@ function openControllerModal() {
   btnStart.onclick = () => {
     startModal.style.display = "flex";
     updateConfirmButton();
-    syncModelsToModal();
-  };
+};
 
-  function syncModelsToModal() {
-    modalTrainedSelect.innerHTML =
-      '<option value="">— Select or add new —</option>';
-    modelList.forEach((m) => {
-      const opt = document.createElement("option");
-      opt.value = m;
-      opt.textContent = m;
-      modalTrainedSelect.appendChild(opt);
-    });
-    if (sidebarTrainedSelect.value) {
-      modalTrainedSelect.value = sidebarTrainedSelect.value;
-    }
-  }
+
 
   // Add new model on Enter
+ if (newModelInput) {
+
   newModelInput.addEventListener("keydown", (e) => {
+
     if (e.key === "Enter") {
       e.preventDefault();
+
       const name = newModelInput.value.trim();
+
       if (name && !modelList.includes(name)) {
+
         modelList.push(name);
+
         modelList.sort((a, b) => a.localeCompare(b));
+
         localStorage.setItem("texa_trained_models", JSON.stringify(modelList));
 
-        syncModelsToModal();
         updateSidebarModelSelect();
 
-        if (modelList.length > 0) {
-          sidebarTrainedSelect.value = name;
-        }
+        sidebarTrainedSelect.value = name;
 
         newModelInput.value = "";
+
         showToast(`Model "${name}" added`, "fa-plus", "#16a34a");
+
       }
+
     }
+
   });
 
-  function updateSidebarModelSelect() {
-    const select = document.getElementById("trainedModelSelect");
-    select.innerHTML = '<option value="">— Select model in modal —</option>';
-    modelList.forEach((m) => {
-      const opt = document.createElement("option");
-      opt.value = m;
-      opt.textContent = m;
-      select.appendChild(opt);
-    });
-  }
+}
+
+ function updateSidebarModelSelect() {
+
+  const select = document.getElementById("trainedModelSelect");
+
+  select.innerHTML = '<option value="">— Select model —</option>';
+
+  modelList.forEach((m) => {
+
+    const opt = document.createElement("option");
+
+    opt.value = m;
+    opt.textContent = m;
+
+    select.appendChild(opt);
+
+  });
+
+}
 
   // ────────────────────────────────────────────────
   //  CONFIRM → Start Inspection
   // ────────────────────────────────────────────────
-  modalConfirm.onclick = () => {
-    if (!modalCanStart()) return;
+modalConfirm.onclick = () => {
 
-    const selectedModel = modalTrainedSelect.value;
+  if (!modalMaterial.value || !modalCount.value || !modalYarn.value) return;
 
-    // Update sidebar model display
-    if (selectedModel) {
-      sidebarTrainedSelect.innerHTML = `<option value="${selectedModel}" selected>${selectedModel}</option>`;
-      sidebarTrainedSelect.value = selectedModel;
-      sidebarTrainedSelect.classList.remove("model-display");
-      void sidebarTrainedSelect.offsetWidth;
-      sidebarTrainedSelect.classList.add("model-display");
-    }
+  const modelName =
+    modalMaterial.value.trim() +
+    "_" +
+    modalCount.value.trim() +
+    "_" +
+    modalYarn.value.trim();
 
-    // Save to backend
-    if (window.bridge && bridge.saveTrainingSettings) {
-      bridge.saveTrainingSettings(
-        modalMaterial.value,
-        modalCount.value,
-        modalYarn.value,
-        selectedModel,
-      );
-    }
+  // Save model list
+  if (!modelList.includes(modelName)) {
+    modelList.push(modelName);
+    localStorage.setItem("texa_trained_models", JSON.stringify(modelList));
+  }
 
-    camTag.textContent = `${modalMaterial.value} · ${modalCount.value} · Yarn ${modalYarn.value}`;
+  updateSidebarModelSelect();
+  sidebarTrainedSelect.value = modelName;
 
-    closeStartModal();
-    body.classList.add("running");
+  localStorage.setItem("texa_last_model", modelName);
 
-    inspectionRunning = true;
-    updateAllStates(); // ← buttons + side menu
+  // Save to Python
+  if (window.bridge && bridge.saveTrainingSettings) {
 
-    statusPill.className = "status-pill running";
-    statusText.textContent = "RUNNING";
+    bridge.saveTrainingSettings(
+      modalMaterial.value,
+      modalCount.value,
+      modalYarn.value,
+      modelName
+    );
 
-    uptimeSec = 0;
-    uptimeTimer = setInterval(() => {
-      uptimeSec++;
-      document.getElementById("mUptime").textContent =
-        `${pad(Math.floor(uptimeSec / 60))}:${pad(uptimeSec % 60)}`;
-    }, 1000);
-
-    startMetrics();
-
-    if (window.bridge) {
-
-    // 1️⃣ Start camera live
+    // ⭐ START CAMERA
     bridge.startCamera();
 
-    // 2️⃣ Start continuous training (B method)
+    // ⭐ START TRAINING MODE
     const settings = JSON.stringify({
       material: modalMaterial.value,
       count: modalCount.value,
       yarn: modalYarn.value,
-      model: selectedModel
+      model: modelName
     });
 
     setTimeout(() => {
@@ -299,9 +295,33 @@ function openControllerModal() {
     }, 300);
   }
 
-    video.style.display = "block";
-    placeholder.style.display = "none";
-  };
+  closeStartModal();
+
+  video.style.display = "block";
+  placeholder.style.display = "none";
+
+
+  body.classList.add("running");
+
+  inspectionRunning = true;
+  updateAllStates();
+
+  statusPill.className = "status-pill running";
+  statusText.textContent = "RUNNING";
+
+  uptimeSec = 0;
+
+  uptimeTimer = setInterval(() => {
+      uptimeSec++;
+      document.getElementById("mUptime").textContent =
+        `${pad(Math.floor(uptimeSec / 60))}:${pad(uptimeSec % 60)}`;
+  }, 100);
+
+  startMetrics();
+
+};
+
+
 
   function startMetrics() {
     inspected = defects = 0;
@@ -396,22 +416,24 @@ function openControllerModal() {
   //  Load saved models
   // ────────────────────────────────────────────────
   try {
-    const saved = localStorage.getItem("texa_trained_models");
-    if (saved) modelList = JSON.parse(saved);
 
-    const lastModel = localStorage.getItem("texa_last_model");
-    if (lastModel && modelList.includes(lastModel)) {
-      sidebarTrainedSelect.innerHTML = `<option value="${lastModel}" selected>${lastModel}</option>`;
+  const saved = localStorage.getItem("texa_trained_models");
+
+  if (saved) {
+      modelList = JSON.parse(saved);
+  }
+
+  // ⭐ Populate dropdown when page loads
+  updateSidebarModelSelect();
+
+  const lastModel = localStorage.getItem("texa_last_model");
+
+  if (lastModel && modelList.includes(lastModel)) {
       sidebarTrainedSelect.value = lastModel;
-    }
-  } catch (e) {}
+  }
 
-  modalConfirm.addEventListener("click", () => {
-    const selected = modalTrainedSelect.value;
-    if (selected) {
-      localStorage.setItem("texa_last_model", selected);
-    }
-  });
+} catch (e) {}
+
 
   // ────────────────────────────────────────────────
   //  Initial state

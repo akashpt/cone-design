@@ -1,6 +1,6 @@
 {
-    "material": "tencel",
+    "material": "coot",
     "count": "30s",
-    "yarn": "8-1",
-    "model": "test"
+    "yarn": "9-1",
+    "model": "coot_30s_9-1"
 }

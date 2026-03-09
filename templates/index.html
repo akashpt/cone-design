@@ -1,184 +1,187 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    />
-    <title>Texa | COPS</title>
 
-    <link rel="stylesheet" href="../static/css/all.min.css" />
-    <link rel="stylesheet" href="../static/css/style.css" />
-    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
-    <style>
-      .modal {
-        position: fixed; /* Must be fixed to cover viewport */
-        inset: 0; /* Shorthand for top:0; right:0; bottom:0; left:0; */
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.65);
-        display: none; /* hidden by default */
-        align-items: center; /* vertical center */
-        justify-content: center; /* horizontal center */
-        z-index: 2000;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Texa | COPS</title>
 
-      /* VERY IMPORTANT: when you show it, force flex again */
-      .modal.visible,
-      .modal[style*="display: flex"],
-      .modal.show {
-        /* add any class you use to show it */
-        display: flex !important;
-      }
+  <link rel="stylesheet" href="../static/css/all.min.css" />
+  <link rel="stylesheet" href="../static/css/style.css" />
+  <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+  <style>
+    .modal {
+      position: fixed;
+      /* Must be fixed to cover viewport */
+      inset: 0;
+      /* Shorthand for top:0; right:0; bottom:0; left:0; */
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.65);
+      display: none;
+      /* hidden by default */
+      align-items: center;
+      /* vertical center */
+      justify-content: center;
+      /* horizontal center */
+      z-index: 2000;
+    }
 
-      .modal-content {
-        background: white;
-        padding: 2rem;
-        border-radius: 12px;
-        width: 90%;
-        max-width: 440px; /* slightly wider feels nicer */
-        max-height: 90vh; /* prevent overflow on small screens */
-        overflow-y: auto; /* scroll inside if content is long */
-        position: relative;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
-        transform: scale(0.95); /* subtle entrance feel — optional */
-        transition: transform 0.2s ease;
-      }
+    /* VERY IMPORTANT: when you show it, force flex again */
+    .modal.visible,
+    .modal[style*="display: flex"],
+    .modal.show {
+      /* add any class you use to show it */
+      display: flex !important;
+    }
 
-      /* Optional: nicer appearance when visible */
-      .modal.visible .modal-content {
-        transform: scale(1);
-      }
-      .modal-close {
-        position: absolute;
-        top: 12px;
-        right: 16px;
-        font-size: 28px;
-        cursor: pointer;
-        color: #777;
-      }
+    .modal-content {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 440px;
+      /* slightly wider feels nicer */
+      max-height: 90vh;
+      /* prevent overflow on small screens */
+      overflow-y: auto;
+      /* scroll inside if content is long */
+      position: relative;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+      transform: scale(0.95);
+      /* subtle entrance feel — optional */
+      transition: transform 0.2s ease;
+    }
 
-      .modal-close:hover {
-        color: #333;
-      }
+    /* Optional: nicer appearance when visible */
+    .modal.visible .modal-content {
+      transform: scale(1);
+    }
 
-      .modal-field {
-        margin: 1.5rem 0;
-      }
+    .modal-close {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      font-size: 28px;
+      cursor: pointer;
+      color: #777;
+    }
 
-      .modal-field label {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-weight: 500;
-      }
+    .modal-close:hover {
+      color: #333;
+    }
 
-      .modal-field input {
-        width: 100%;
-        padding: 10px 12px;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        font-size: 1rem;
-      }
+    .modal-field {
+      margin: 1.5rem 0;
+    }
 
-      .modal-buttons {
-        display: flex;
-        gap: 12px;
-        justify-content: flex-end;
-        margin-top: 1.5rem;
-      }
+    .modal-field label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
 
-      .modal-error {
-        text-align: center;
-      }
+    .modal-field input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
 
-      .btn-cancel {
-        background: #95a5a6 !important;
-      }
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 1.5rem;
+    }
 
-      .btn-submit {
-        background: var(--primary) !important;
-      }
-    </style>
-  </head>
+    .modal-error {
+      text-align: center;
+    }
 
-  <body>
-    <div id="loaderDots" class="dots-loader">
-      <div class="dot"></div>
-      <div class="dot"></div>
-      <div class="dot"></div>
-    </div>
-    <aside>
-      <div class="logo-area">
-        <div class="logo_div">
-          <a href="index.html">
-            <img src="../static/img/logo.png" alt="Logo" />
-          </a>
-        </div>
-      </div>
-      <div class="menu-section">
-        <div class="menu-label">Navigation</div>
+    .btn-cancel {
+      background: #95a5a6 !important;
+    }
 
-        <a href="index.html" rel="noopener noreferrer" class="navigable">
-          <div class="menu-item active">
-            <i class="fa-solid fa-house"></i> HOME
-          </div>
+    .btn-submit {
+      background: var(--primary) !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="loaderDots" class="dots-loader">
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+  </div>
+  <aside>
+    <div class="logo-area">
+      <div class="logo_div">
+        <a href="index.html">
+          <img src="../static/img/logo.png" alt="Logo" />
         </a>
+      </div>
+    </div>
+    <div class="menu-section">
+      <div class="menu-label">Navigation</div>
 
-        <div class="menu-item navigable" onclick="bridge.goReport()">
-          <i class="fa-solid fa-chart-simple"></i> REPORT
+      <a href="index.html" rel="noopener noreferrer" class="navigable">
+        <div class="menu-item active">
+          <i class="fa-solid fa-house"></i> HOME
         </div>
+      </a>
 
-        <div class="menu-item navigable" onclick="openControllerModal()">
-          <i class="fa-solid fa-sliders"></i> CONTROLLER
-        </div>
+      <div class="menu-item navigable" onclick="bridge.goReport()">
+        <i class="fa-solid fa-chart-simple"></i> REPORT
+      </div>
 
-        <div class="menu-item navigable" onclick="bridge.goTraining()">
-          <i class="fa-solid fa-microchip"></i> TRAINING
-        </div>
+      <div class="menu-item navigable" onclick="openControllerModal()">
+        <i class="fa-solid fa-sliders"></i> CONTROLLER
+      </div>
 
-        <div class="menu-label" style="margin-top: 4px">System</div>
+      <div class="menu-item navigable" onclick="bridge.goTraining()">
+        <i class="fa-solid fa-microchip"></i> TRAINING
+      </div>
 
-        <div class="menu-item navigable">
-          <i class="fa-solid fa-gear"></i> SETTINGS
+      <div class="menu-label" style="margin-top: 4px">System</div>
+
+      <div class="menu-item navigable">
+        <i class="fa-solid fa-gear"></i> SETTINGS
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="signal-block">
+        <div class="signal-label">COPS Count</div>
+        <div class="signal-value">
+          <span class="signal-dot"></span><span id="signalCount">244</span>
         </div>
       </div>
-      <div class="sidebar-footer">
-        <div class="signal-block">
-          <div class="signal-label">COPS Count</div>
-          <div class="signal-value">
-            <span class="signal-dot"></span><span id="signalCount">244</span>
-          </div>
+    </div>
+  </aside>
+  <main>
+    <header>
+      <div class="header-left">
+        <span class="breadcrumb">COPS Inspection </span>
+        <span class="header-badge">YARN INSPECTION</span>
+      </div>
+      <div id="statusPill" class="status-pill waiting">
+        <span class="status-dot"></span>
+        <span id="statusText">WAITING</span>
+      </div>
+      <div class="header-right">
+        <span id="liveTime">--/--/---- — --:--:--</span>
+        <div class="header-user">
+          <i class="fa-solid fa-user" style="opacity: 0.8; font-size: 0.68rem"></i>
         </div>
       </div>
-    </aside>
-    <main>
-      <header>
-        <div class="header-left">
-          <span class="breadcrumb">COPS Inspection </span>
-          <span class="header-badge">YARN INSPECTION</span>
-        </div>
-        <div id="statusPill" class="status-pill waiting">
-          <span class="status-dot"></span>
-          <span id="statusText">WAITING</span>
-        </div>
-        <div class="header-right">
-          <span id="liveTime">--/--/---- — --:--:--</span>
-          <div class="header-user">
-            <i
-              class="fa-solid fa-user"
-              style="opacity: 0.8; font-size: 0.68rem"
-            ></i>
-          </div>
-        </div>
-      </header>
+    </header>
 
-      <div class="content">
-        <div class="camera-wrap">
-          <div class="camera-area">
-            <img
-              id="video"
-              style="
+    <div class="content">
+      <div class="camera-wrap">
+        <div class="camera-area">
+          <img id="video" style="
                 position: absolute;
                 top: 0;
                 left: 0;
@@ -186,330 +189,365 @@
                 height: 100%;
                 object-fit: contain;
                 z-index: 1;
-              "
-            />
-            <div id="placeholder" class="camera-placeholder">
-              <div class="cam-ring"><i class="fa-solid fa-camera"></i></div>
-              <div class="cam-hint">
-                Fill in the settings on the right<br />
-                then press the green <strong>START</strong> button
-              </div>
-            </div>
-            <div id="camOverlay" class="cam-overlay">
-              <div class="scan-line"></div>
-              <div class="corner-tl"></div>
-              <div class="corner-tr"></div>
-              <div class="corner-bl"></div>
-              <div class="corner-br"></div>
-              <div class="cam-footer">
-                <span class="cam-tag" id="camTag">—</span>
-                <div class="live-badge"><span class="live-dot"></span>LIVE</div>
-              </div>
+              " />
+          <div id="placeholder" class="camera-placeholder">
+            <div class="cam-ring"><i class="fa-solid fa-camera"></i></div>
+            <div class="cam-hint">
+              Fill in the settings on the right<br />
+              then press the green <strong>START</strong> button
             </div>
           </div>
-
-          <div class="metrics-bar mtb-10">
-            <div class="metric-item">
-              <div class="metric-icon ic-red">
-                <i class="fa-solid fa-magnifying-glass"></i>
-              </div>
-              <div>
-                <div class="metric-label">Inspected</div>
-                <div class="metric-val" id="mInspected">—</div>
-              </div>
-            </div>
-            <div class="metric-item">
-              <div class="metric-icon ic-green">
-                <i class="fa-solid fa-check-circle"></i>
-              </div>
-              <div>
-                <div class="metric-label">Pass Rate</div>
-                <div class="metric-val" id="mPassRate">—</div>
-              </div>
-            </div>
-            <div class="metric-item">
-              <div class="metric-icon ic-amber">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-              </div>
-              <div>
-                <div class="metric-label">Defects</div>
-                <div class="metric-val" id="mDefects">—</div>
-              </div>
-            </div>
-            <div class="metric-item">
-              <div class="metric-icon ic-blue">
-                <i class="fa-solid fa-clock"></i>
-              </div>
-              <div>
-                <div class="metric-label">Uptime</div>
-                <div class="metric-val" id="mUptime">00:00</div>
-              </div>
+          <div id="camOverlay" class="cam-overlay">
+            <div class="scan-line"></div>
+            <div class="corner-tl"></div>
+            <div class="corner-tr"></div>
+            <div class="corner-bl"></div>
+            <div class="corner-br"></div>
+            <div class="cam-footer">
+              <span class="cam-tag" id="camTag">—</span>
+              <div class="live-badge"><span class="live-dot"></span>LIVE</div>
             </div>
           </div>
         </div>
 
-        <div class="controls-sidebar">
-          <div class="panel-sec">
-            <div class="sec-lbl">Controls</div>
-            <div class="btn-row">
-              <button id="btnStart" class="btn-main btn-start" disabled>
-                <span class="btn-icon"
-                  ><i class="fa-solid fa-circle-play"></i
-                ></span>
-                <span class="btn-label">START</span>
-              </button>
-              <button id="btnStop" class="btn-main btn-stop" disabled>
-                <span class="btn-icon"
-                  ><i class="fa-solid fa-circle-stop"></i
-                ></span>
-                <span class="btn-label">STOP</span>
-              </button>
+        <div class="metrics-bar mtb-10">
+          <div class="metric-item">
+            <div class="metric-icon ic-red">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </div>
+            <div>
+              <div class="metric-label">Inspected</div>
+              <div class="metric-val" id="mInspected">—</div>
             </div>
           </div>
-
-          <div class="panel-sec">
-            <div class="sec-lbl">
-              Step 1 — Choose your settings
-              <span style="color: var(--primary)">*</span>
+          <div class="metric-item">
+            <div class="metric-icon ic-green">
+              <i class="fa-solid fa-check-circle"></i>
             </div>
-            <div class="fields-grid">
-              <div class="field">
-                <label><span class="req">Material</span></label>
-                <select id="material">
-                  <option value="">— Pick a material —</option>
-                  <option>Cotton</option>
-                  <option>Polyester</option>
-                  <option>Blended</option>
-                </select>
-              </div>
-              <div class="two-col">
-                <div class="field">
-                  <label><span class="req">Count</span></label>
-                  <select id="count">
-                    <option value="">— Pick —</option>
-                    <option>20s</option>
-                    <option>30s</option>
-                    <option>40s</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label><span class="req">Yarn</span></label>
-                  <select id="yarn">
-                    <option value="">— Pick —</option>
-                    <option>9-1</option>
-                    <option>10-1</option>
-                    <option>12-1</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-            <div class="ok_btn_reste_btn_flex">
-              <button
-                id="btnOk"
-                class="btn-main ok_btn"
-                style="background: #722f37; color: white"
-                disabled
-              >
-                OK
-              </button>
-              <button
-                id="btnReset"
-                class="btn-main reset_btn"
-                style="background: #d97706; color: white"
-                disabled
-              >
-                RESET
-              </button>
+            <div>
+              <div class="metric-label">Pass Rate</div>
+              <div class="metric-val" id="mPassRate">—</div>
             </div>
           </div>
+          <div class="metric-item">
+            <div class="metric-icon ic-amber">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div>
+              <div class="metric-label">Defects</div>
+              <div class="metric-val" id="mDefects">—</div>
+            </div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-icon ic-blue">
+              <i class="fa-solid fa-clock"></i>
+            </div>
+            <div>
+              <div class="metric-label">Uptime</div>
+              <div class="metric-val" id="mUptime">00:00</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-          <div class="panel-sec">
-            <div class="sec-lbl">Step 2 — Optional settings</div>
+      <div class="controls-sidebar">
+        <div class="panel-sec">
+          <div class="sec-lbl">Controls</div>
+          <div class="btn-row">
+            <button id="btnStart" class="btn-main btn-start" disabled>
+              <span class="btn-icon"><i class="fa-solid fa-circle-play"></i></span>
+              <span class="btn-label">START</span>
+            </button>
+            <button id="btnStop" class="btn-main btn-stop" disabled>
+              <span class="btn-icon"><i class="fa-solid fa-circle-stop"></i></span>
+              <span class="btn-label">STOP</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="panel-sec">
+          <div class="sec-lbl">
+            Step 1 — Choose your settings
+            <span style="color: var(--primary)">*</span>
+          </div>
+          <div class="fields-grid">
+            <div class="field">
+              <label><span class="req">Material</span></label>
+              <select id="material">
+                <option value="">— Pick a material —</option>
+                <option>Cotton</option>
+                <option>Polyester</option>
+                <option>Blended</option>
+              </select>
+            </div>
             <div class="two-col">
               <div class="field">
-                <label>Green</label>
-                <select id="good">
-                  <option value="">—</option>
-                  <option>1</option>
-                  <option>2</option>
-                  <option>3</option>
-                  <option>4</option>
-                  <option>5</option>
-                  <option>6</option>
-                  <option>7</option>
-                  <option>8</option>
-                  <option>9</option>
-                  <option>10</option>
+                <label><span class="req">Count</span></label>
+                <select id="count">
+                  <option value="">— Pick —</option>
+                  <option>20s</option>
+                  <option>30s</option>
+                  <option>40s</option>
                 </select>
               </div>
               <div class="field">
-                <label>Threshold</label>
-                <select id="threshold">
-                  <option value="">—</option>
-                  <option>1</option>
-                  <option>2</option>
-                  <option>3</option>
-                  <option>4</option>
-                  <option>5</option>
-                  <option>6</option>
-                  <option>7</option>
-                  <option>8</option>
-                  <option>9</option>
-                  <option>10</option>
+                <label><span class="req">Yarn</span></label>
+                <select id="yarn">
+                  <option value="">— Pick —</option>
+                  <option>9-1</option>
+                  <option>10-1</option>
+                  <option>12-1</option>
                 </select>
               </div>
             </div>
           </div>
+          <div class="ok_btn_reste_btn_flex">
+            <button id="btnOk" class="btn-main ok_btn" style="background: #722f37; color: white" disabled>
+              OK
+            </button>
+            <button id="btnReset" class="btn-main reset_btn" style="background: #d97706; color: white" disabled>
+              RESET
+            </button>
+          </div>
+        </div>
 
-          <div class="panel-sec">
-            <div class="cops_status">
-              <p>COPS status:</p>
+        <div class="panel-sec">
+          <div class="sec-lbl">Step 2 — Optional settings</div>
+          <div class="two-col">
+            <div class="field">
+              <label>Green</label>
+              <select id="good">
+                <option value="">—</option>
+                <option>1</option>
+                <option>2</option>
+                <option>3</option>
+                <option>4</option>
+                <option>5</option>
+                <option>6</option>
+                <option>7</option>
+                <option>8</option>
+                <option>9</option>
+                <option>10</option>
+              </select>
             </div>
-            <div class="action-row">
-              <div class="cone-box">
-                <span class="cone-label">1st</span>
-                <p><strong class="coneStatus">Good</strong></p>
-              </div>
+            <div class="field">
+              <label>Threshold</label>
+              <select id="threshold">
+                <option value="">—</option>
+                <option>1</option>
+                <option>2</option>
+                <option>3</option>
+                <option>4</option>
+                <option>5</option>
+                <option>6</option>
+                <option>7</option>
+                <option>8</option>
+                <option>9</option>
+                <option>10</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
-              <div class="cone-box">
-                <span class="cone-label">2nd</span>
-                <p><strong class="coneStatus">Defect</strong></p>
-              </div>
+        <div class="panel-sec">
+          <div class="cops_status">
+            <p>COPS status:</p>
+          </div>
+          <div class="action-row">
+            <div class="cone-box">
+              <span class="cone-label">1st</span>
+              <p><strong class="coneStatus" data-default="true">—</strong></p>
+            </div>
 
-              <div class="cone-box">
-                <span class="cone-label">3rd</span>
-                <p><strong class="coneStatus">No COPS</strong></p>
-              </div>
+            <div class="cone-box">
+              <span class="cone-label">2nd</span>
+              <p><strong class="coneStatus" data-default="true">—</strong></p>
+            </div>
 
-              <div class="cone-box">
-                <span class="cone-label">4th</span>
-                <p><strong class="coneStatus">No COPS</strong></p>
-              </div>
+            <div class="cone-box">
+              <span class="cone-label">3rd</span>
+              <p><strong class="coneStatus" data-default="true">—</strong></p>
+            </div>
+
+            <div class="cone-box">
+              <span class="cone-label">4th</span>
+              <p><strong class="coneStatus" data-default="true">—</strong></p>
             </div>
           </div>
         </div>
       </div>
-    </main>
-    <div class="toast" id="toast">
-      <i class="fa-solid fa-circle-check"></i>
-      <span id="toastMsg">Done.</span>
     </div>
+  </main>
+  <div class="toast" id="toast">
+    <i class="fa-solid fa-circle-check"></i>
+    <span id="toastMsg">Done.</span>
+  </div>
 
-    <!-- Controller Password Modal -->
-    <div id="controllerModal" class="modal" style="display: none">
-      <div class="modal-content">
-        <span class="modal-close" onclick="closeControllerModal()">×</span>
-        <h2>Controller Access</h2>
-        <p>Please enter the password to access controller settings.</p>
+  <!-- Controller Password Modal -->
+  <div id="controllerModal" class="modal" style="display: none">
+    <div class="modal-content">
+      <span class="modal-close" onclick="closeControllerModal()">×</span>
+      <h2>Controller Access</h2>
+      <p>Please enter the password to access controller settings.</p>
 
-        <div class="modal-field">
-          <label for="controllerPassword">Password</label>
-          <input
-            type="password"
-            id="controllerPassword"
-            placeholder="Enter password"
-            autocomplete="off"
-          />
-        </div>
-
-        <div class="modal-buttons">
-          <button class="btn-main reset_btn"   style="background: #722f37; color: white"  onclick="closeControllerModal()">
-            Cancel
-          </button>
-          <button class="btn-main ok_btn"      style="background: #d97706; color: white" onclick="submitControllerPassword()">
-            Submit
-          </button>
-        </div>
-
-        <p
-          id="modalError"
-          class="modal-error"
-          style="display: none; color: #e74c3c; margin-top: 12px"
-        >
-          Incorrect password. Please try again.
-        </p>
+      <div class="modal-field">
+        <label for="controllerPassword">Password</label>
+        <input type="password" id="controllerPassword" placeholder="Enter password" autocomplete="off" />
       </div>
+
+      <div class="modal-buttons">
+        <button class="btn-main reset_btn" style="background: #722f37; color: white" onclick="closeControllerModal()">
+          Cancel
+        </button>
+        <button class="btn-main ok_btn" style="background: #d97706; color: white" onclick="submitControllerPassword()">
+          Submit
+        </button>
+      </div>
+
+      <p id="modalError" class="modal-error" style="display: none; color: #e74c3c; margin-top: 12px">
+        Incorrect password. Please try again.
+      </p>
     </div>
+  </div>
 
-    <script src="../static/script/index.js"></script>
+  <script src="../static/script/index.js"></script>
 
-    <script>
-      function openControllerModal() {
-        const modal = document.getElementById("controllerModal");
-        const input = document.getElementById("controllerPassword");
-        const error = document.getElementById("modalError");
+  <script>
+    function openControllerModal() {
+      const modal = document.getElementById("controllerModal");
+      const input = document.getElementById("controllerPassword");
+      const error = document.getElementById("modalError");
 
-        if (modal) {
-          modal.style.display = "flex"; // ← This line is critical!
-          input.value = "";
-          error.style.display = "none";
-          input.focus();
+      if (modal) {
+        modal.style.display = "flex"; // ← This line is critical!
+        input.value = "";
+        error.style.display = "none";
+        input.focus();
 
-          // Optional: add class for animation
-          setTimeout(() => modal.classList.add("visible"), 10);
+        // Optional: add class for animation
+        setTimeout(() => modal.classList.add("visible"), 10);
+      }
+    }
+
+    function closeControllerModal() {
+      const modal = document.getElementById("controllerModal");
+      if (modal) {
+        modal.classList.remove("visible");
+        modal.style.display = "none";
+      }
+    }
+  </script>
+  <script>
+    // Add this at the end of your <script> or in a new script block
+    window.addEventListener(
+      "wheel",
+      function (e) {
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault();
+          e.stopPropagation();
         }
+      },
+      { passive: false },
+    );
+
+    window.addEventListener(
+      "keydown",
+      function (e) {
+        // Block Ctrl + +, Ctrl + -, Ctrl + 0, Cmd + +, etc.
+        if (
+          (e.ctrlKey || e.metaKey) &&
+          (e.key === "+" || e.key === "-" || e.key === "=" || e.key === "0")
+        ) {
+          e.preventDefault();
+        }
+      },
+      { passive: false },
+    );
+  </script>
+
+  <script>
+    function checkControllerPassword() {
+      const passwordInput = document.getElementById("controllerPassword");
+      const password = passwordInput.value;
+
+      if (password === "") {
+        alert("Enter password");
+        return;
       }
 
-      function closeControllerModal() {
-        const modal = document.getElementById("controllerModal");
-        if (modal) {
-          modal.classList.remove("visible");
-          modal.style.display = "none";
-        }
+      if (typeof bridge !== "undefined") {
+        bridge.sendPassword(password);
+        bridge.goController();
       }
-    </script>
-    <script>
-      // Add this at the end of your <script> or in a new script block
-      window.addEventListener(
-        "wheel",
-        function (e) {
-          if (e.ctrlKey || e.metaKey) {
-            e.preventDefault();
-            e.stopPropagation();
-          }
-        },
-        { passive: false },
-      );
+    }
+    function submitControllerPassword() {
+      const password = document.getElementById("controllerPassword").value;
 
-      window.addEventListener(
-        "keydown",
-        function (e) {
-          // Block Ctrl + +, Ctrl + -, Ctrl + 0, Cmd + +, etc.
-          if (
-            (e.ctrlKey || e.metaKey) &&
-            (e.key === "+" || e.key === "-" || e.key === "=" || e.key === "0")
-          ) {
-            e.preventDefault();
-          }
-        },
-        { passive: false },
-      );
-    </script>
+      if (!password) return;
 
-    <script>
-      function checkControllerPassword() {
-        const passwordInput = document.getElementById("controllerPassword");
-        const password = passwordInput.value;
-
-        if (password === "") {
-          alert("Enter password");
-          return;
-        }
-
-        if (typeof bridge !== "undefined") {
-          bridge.sendPassword(password);
-          bridge.goController();
-        }
+      if (window.bridge) {
+        bridge.sendPassword(password);
       }
-      function submitControllerPassword() {
-        const password = document.getElementById("controllerPassword").value;
+    }
 
-        if (!password) return;
+    // ────────────────────────────────────────────────
+    // Function to update one COPS status
+    // ────────────────────────────────────────────────
+    function updateCopsStatus(position, statusText) {
+      // position = 1,2,3,4
+      const statusEl = document.querySelectorAll('.coneStatus')[position - 1];
 
-        if (window.bridge) {
-          bridge.sendPassword(password);
-        }
+      if (!statusEl) return;
+
+      if (statusText && statusText.trim() !== "") {
+        statusEl.textContent = statusText.trim();
+        statusEl.removeAttribute('data-default');   // optional – remove marker
+      } else {
+        statusEl.textContent = "—";
+        statusEl.setAttribute('data-default', 'true'); // optional
       }
-    </script>
-  </body>
+    }
+
+    // ────────────────────────────────────────────────
+    // Update all at once (most common usage)
+    // ────────────────────────────────────────────────
+    function updateAllCopsStatuses(statusArray) {
+      // statusArray example: ["Good", "Defect", null, ""]   or   ["Good", "", "—", null]
+
+      const statuses = document.querySelectorAll('.coneStatus');
+
+      statusArray.forEach((text, index) => {
+        if (index >= statuses.length) return;
+
+        const el = statuses[index];
+        const value = (text ?? "").trim();
+
+        if (value) {
+          el.textContent = value;
+          el.removeAttribute('data-default');
+        } else {
+          el.textContent = "—";
+          // el.setAttribute('data-default', 'true'); // optional
+        }
+      });
+    }
+
+    // ────────────────────────────────────────────────
+    // Examples how to call it from your bridge / websocket / timer:
+    // ────────────────────────────────────────────────
+
+    // Single update
+    // updateCopsStatus(2, "Defect");           // changes 2nd cone
+    // updateCopsStatus(3, "");                  // sets 3rd to "—"
+
+    // Update all four at once (recommended)
+    updateAllCopsStatuses(["Good", "Defect", null, ""]);
+
+    // Reset everything to default
+    updateAllCopsStatuses([null, null, null, null]);
+    // or
+    updateAllCopsStatuses([]);
+  </script>
+</body>
+
 </html>

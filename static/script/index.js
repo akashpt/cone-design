@@ -11,10 +11,18 @@ updateTime();
 // ================= BRIDGE CONNECTION =================
 document.addEventListener("DOMContentLoaded", function () {
 
+      const startBtn = document.getElementById("startBtn");
+
+      if(startBtn){
+          startBtn.disabled = true;
+      }
+
     // Safe bridge connection – works in Qt, doesn't crash in normal browser
     if (typeof qt !== 'undefined' && qt.webChannelTransport) {
         new QWebChannel(qt.webChannelTransport, function(channel) {
             window.bridge = channel.objects.bridge;
+
+            loadSavedSettings();
 
             bridge.frame_signal.connect(function(imageData) {
                 const img = document.getElementById("video");
@@ -38,29 +46,29 @@ document.addEventListener("DOMContentLoaded", function () {
     const btnStart = document.getElementById("btnStart");
     const btnStop = document.getElementById("btnStop");
 
-    if (btnStart) {
-        btnStart.addEventListener("click", function () {
+    // if (btnStart) {
+    //     btnStart.addEventListener("click", function () {
 
-            if (!window.bridge) return;
+    //         if (!window.bridge) return;
 
-            btnStart.disabled = true;
-            btnStop.disabled = false;
+    //         btnStart.disabled = true;
+    //         btnStop.disabled = false;
 
-            bridge.startCamera();
-        });
-    }
+    //         bridge.startCamera();
+    //     });
+    // }
 
-    if (btnStop) {
-        btnStop.addEventListener("click", function () {
+    // if (btnStop) {
+    //     btnStop.addEventListener("click", function () {
 
-            if (!window.bridge) return;
+    //         if (!window.bridge) return;
 
-            btnStop.disabled = true;
-            btnStart.disabled = false;
+    //         btnStop.disabled = true;
+    //         btnStart.disabled = false;
 
-            bridge.stopCamera();
-        });
-    }
+    //         bridge.stopCamera();
+    //     });
+    // }
 
     // ───────────────────────────────────────────────────────────────
     // NEW CONTROL LOGIC: OK + RESET + LOCK AFTER CONFIRM + MENU DISABLE
@@ -290,6 +298,41 @@ document.addEventListener("DOMContentLoaded", function () {
     } catch (e) {}
 
     updateButtonStates();
+
+function loadSavedSettings(){
+
+    if(!bridge) return;
+
+    bridge.getSavedSettings(function(data){
+
+        const settings = JSON.parse(data);
+
+        if(settings.material){
+            selMaterial.value = settings.material;
+            selMaterial.classList.add("filled");
+        }
+
+        if(settings.count){
+            selCount.value = settings.count;
+            selCount.classList.add("filled");
+        }
+
+        if(settings.yarn){
+            selYarn.value = settings.yarn;
+            selYarn.classList.add("filled");
+        }
+
+        // AUTO CONFIRM SETTINGS
+        if(settings.material && settings.count && settings.yarn){
+            settingsConfirmed = true;
+        }
+
+        updateButtonStates();
+
+    });
+
+}
+
 
     window.addEventListener("load", () => {
       setTimeout(

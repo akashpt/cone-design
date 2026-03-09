@@ -2,7 +2,7 @@
 import cv2
 import base64
 import json
-from path import BASE_DIR ,SETTINGS_FILE ,TRAINING_SETTINGS_FILE ,TRAINING_IMAGES_DIR
+from path import BASE_DIR ,SETTINGS_FILE ,TRAINING_SETTINGS_FILE ,TRAINING_IMAGES_DIR 
 import time
 from datetime import datetime
 import os
@@ -79,6 +79,8 @@ class Bridge(QObject):
         # ---------------- CAMERA ----------------
         self.camera = None
         self.camera_type = "webcam"   # options: webcam / lucid / mindvision
+
+        self.load_controller_settings()
 
         self.current_interval = 30
 
@@ -159,6 +161,25 @@ class Bridge(QObject):
             except Exception as e:
                 print("Exposure apply failed:", e)
 
+
+    @pyqtSlot(result=str)
+    def getSavedSettings(self):
+
+        if os.path.exists(SETTINGS_FILE):
+
+            with open(SETTINGS_FILE, "r") as f:
+                data = json.load(f)
+
+            print("Loaded settings:", data)
+
+            return json.dumps(data)
+
+        return json.dumps({
+            "material": "",
+            "count": "",
+            "yarn": ""
+        })
+
     @pyqtSlot()
     def startCamera(self):
 
@@ -226,7 +247,7 @@ class Bridge(QObject):
 
         # slower capture for training
         self.current_interval = 500
-        
+
 
         # start camera
         self.start_camera()
@@ -263,32 +284,79 @@ class Bridge(QObject):
 
         print("Saving Controller Settings")
 
-        # Stop camera before changing settings
         self.stop_camera()
 
-        # Save camera type
         self.camera_type = camera
-
-        # Convert exposure to float
         self.exposure_value = float(exposure)
 
-        print("Camera:", self.camera_type)
-        print("Exposure:", self.exposure_value)
+        data = {
+            "camera": camera,
+            "exposure": self.exposure_value
+        }
 
-      
+        settings_file = BASE_DIR / "controller_settings.json"
 
-        # try:
-        #     self.start_camera()
-        # except:
-        #     print("Camera start failed")
+        with open(settings_file, "w") as f:
+            json.dump(data, f, indent=4)
 
-        # Apply exposure after camera start
+        print("Controller settings saved:", data)
+
+        # Apply exposure if camera already running
         if self.camera:
             try:
                 self.camera.set_exposure(self.exposure_value)
                 print("Exposure applied")
             except Exception as e:
                 print("Exposure set failed:", e)
+
+    @pyqtSlot(result=str)
+    def getControllerSettings(self):
+
+        settings_file = BASE_DIR / "controller_settings.json"
+
+        if os.path.exists(settings_file):
+
+            with open(settings_file,"r") as f:
+                data = json.load(f)
+
+            return json.dumps(data)
+
+        return json.dumps({
+            "camera": "webcam",
+            "exposure": 5000
+        })        
+
+
+    @pyqtSlot(result=str)
+    def getTrainedModels(self):
+
+        models = []
+
+        if not TRAINING_IMAGES_DIR.exists():
+            return json.dumps(models)
+
+        for material in TRAINING_IMAGES_DIR.iterdir():
+
+            if not material.is_dir():
+                continue
+
+            for count in material.iterdir():
+
+                if not count.is_dir():
+                    continue
+
+                for yarn in count.iterdir():
+
+                    if not yarn.is_dir():
+                        continue
+
+                    model = f"{material.name}_{count.name}_{yarn.name}"
+                    models.append(model)
+
+        print("Available models:", models)
+
+        return json.dumps(models)
+            
 
     # -------- NAVIGATION ----------
     @pyqtSlot()
@@ -538,5 +606,20 @@ class Bridge(QObject):
         if result == "BAD":
             gripper_function([1,0,0,0])   
 
+    def load_controller_settings(self):
 
+        settings_file = BASE_DIR / "controller_settings.json"
+
+        if os.path.exists(settings_file):
+
+            with open(settings_file, "r") as f:
+                data = json.load(f)
+
+            self.camera_type = data.get("camera", "webcam")
+            self.exposure_value = float(data.get("exposure", 5000))
+
+            print("Loaded controller settings:", data)
+
+        else:
+            self.exposure_value = 5000 
   

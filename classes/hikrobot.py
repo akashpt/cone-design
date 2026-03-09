@@ -340,7 +340,23 @@ class HikRobotCamera:
     #         print(f"⚠️ Failed to set exposure: {e}")
 
     def set_exposure(self, value):
-        self.cam.MV_CC_SetFloatValue("ExposureTime", value)       
+
+        if not self.cam:
+            print("Camera not initialized")
+            return
+
+        try:
+            self.cam.MV_CC_SetEnumValueByString("ExposureAuto", "Off")
+
+            ret = self.cam.MV_CC_SetFloatValue("ExposureTime", float(value))
+
+            if ret == 0:
+                print(f"Exposure set to {value}")
+            else:
+                print(f"Exposure error: {hex(ret)}")
+
+        except Exception as e:
+            print("Exposure exception:", e)
 
 
 # =========================================================

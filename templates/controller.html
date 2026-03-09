@@ -361,19 +361,13 @@
           <div class="camera-settings-flex">
             <div style="max-width: 420px">
               <h3>Select Camera</h3>
-              <div class="field">
-                <div class="custom-select-container">
-                  <input
-                    type="text"
-                    id="cameraSearch"
-                    class="search-input"
-                    placeholder="Search or select camera…"
-                    autocomplete="off"
-                  />
-                  <div id="cameraOptions" class="options-list"></div>
-                  <input type="hidden" id="cameraValue" />
-                </div>
-              </div>
+             <div class="field">
+  <label for="cameraSelect">Select Camera</label>
+  <select id="cameraSelect" class="search-input" style="padding: 12px 16px; height: 48px;">
+    <option value="" disabled selected>Choose a camera…</option>
+    <!-- options will be filled by JS -->
+  </select>
+</div>
             </div>
 
             <div style="width: 700px">
@@ -455,29 +449,29 @@
           fmt: (v) => v.toString(),
         },
         hikrobot: {
-          min: 28,
-          max: 1000000,
+          min: 0,
+          max: 300000,
           unit: "µs",
           step: 10,
           fmt: (v) => v.toLocaleString(),
         },
         lucid: {
           min: 20,
-          max: 30000000,
+          max: 300000,
           unit: "µs",
           step: 10,
           fmt: (v) => v.toLocaleString(),
         },
         mindvision: {
           min: 10,
-          max: 10000000,
+          max: 100000,
           unit: "µs",
           step: 10,
           fmt: (v) => v.toLocaleString(),
         },
         default: {
           min: 10,
-          max: 1000000,
+          max: 10000,
           unit: "µs",
           step: 10,
           fmt: (v) => v.toLocaleString(),
@@ -485,17 +479,49 @@
       };
 
       // ─── DOM elements ──────────────────────────────────────
-      const searchInput = document.getElementById("cameraSearch");
-      const optionsList = document.getElementById("cameraOptions");
-      const hiddenInput = document.getElementById("cameraValue");
-      const slider = document.getElementById("expSlider");
-      const input = document.getElementById("expInput");
-      const minusBtn = document.getElementById("expMinus");
-      const plusBtn = document.getElementById("expPlus");
-      const scale = document.getElementById("expScale");
-      const helpText = document.getElementById("rangeHelp");
+     // ─── DOM elements ──────────────────────────────────────
+const cameraSelect = document.getElementById("cameraSelect");
+const slider       = document.getElementById("expSlider");
+const input        = document.getElementById("expInput");
+const minusBtn     = document.getElementById("expMinus");
+const plusBtn      = document.getElementById("expPlus");
+const scale        = document.getElementById("expScale");
+const helpText     = document.getElementById("rangeHelp");
 
-      let currentRange = exposureRanges.default;
+let currentRange = exposureRanges.default;
+
+// (keep formatValue, updateExposureRange, updateScaleLabels, updateSliderStyle as they are)
+
+// ─── Populate select ───────────────────────────────────
+function populateCameraSelect() {
+  cameraSelect.innerHTML = '<option value="" disabled selected>Choose a camera…</option>';
+  
+  cameras.forEach(cam => {
+    const option = document.createElement("option");
+    option.value = cam.value;
+    option.textContent = cam.label;
+    cameraSelect.appendChild(option);
+  });
+}
+
+// ─── Selection handler ─────────────────────────────────
+cameraSelect.addEventListener("change", () => {
+  const selectedValue = cameraSelect.value;
+  if (selectedValue) {
+    updateExposureRange(selectedValue);
+    
+    // Call Qt / backend if needed
+    if (window.bridge && bridge.selectCamera) {
+      bridge.selectCamera(selectedValue);
+    }
+  }
+});
+
+// ─── Init ──────────────────────────────────────────────
+populateCameraSelect();
+
+// You can keep a default or remove this line
+updateExposureRange("hikrobot");  // or remove if you want user to choose first
 
       // ─── Format number with unit ───────────────────────────
       function formatValue(v) {
@@ -595,13 +621,20 @@
           item.textContent = cam.label;
           item.dataset.value = cam.value;
 
-          item.addEventListener("click", () => {
-            searchInput.value = cam.label;
-            hiddenInput.value = cam.value;
-            optionsList.classList.remove("show");
-            updateExposureRange(cam.value);
-            // bridge?.selectCamera?.(cam.value);   // uncomment when Qt bridge is ready
-          });
+       item.addEventListener("click", () => {
+
+      searchInput.value = cam.label;
+      hiddenInput.value = cam.value;
+
+      optionsList.classList.remove("show");
+
+      updateExposureRange(cam.value);
+
+      if (window.bridge && bridge.selectCamera){
+          bridge.selectCamera(cam.value);
+      }
+
+});
 
           optionsList.appendChild(item);
         });

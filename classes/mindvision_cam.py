@@ -60,7 +60,8 @@ class MindVisionCamera:
 
         # Manual exposure
         mvsdk.CameraSetAeState(self.hCamera, 0)
-        mvsdk.CameraSetExposureTime(self.hCamera, 640680)
+        # mvsdk.CameraSetExposureTime(self.hCamera, 10000)
+        self.set_exposure(10000)
 
         # Start streaming
         try:
@@ -171,5 +172,17 @@ class MindVisionCamera:
 
 
     def set_exposure(self, value):
-        # CameraSetExposureTime(self.hCamera, value)
-        mvsdk.CameraSetExposureTime(self.hCamera, value)
+
+        if self.hCamera == 0:
+            print("MindVision camera not initialized")
+            return
+
+        try:
+            exposure = float(value)
+
+            mvsdk.CameraSetExposureTime(self.hCamera, exposure)
+
+            print(f"MindVision exposure set to {exposure}")
+
+        except mvsdk.CameraException as e:
+            print("Exposure set failed:", e)

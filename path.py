@@ -70,6 +70,7 @@ DEFAULT_MODEL = MODELS_DIR / "best.pt"
 
 SETTINGS_FILE = BASE_DIR / "settings.json"
 TRAINING_SETTINGS_FILE = BASE_DIR / "training_settings.json"
+CONTROLLER_PAGE =BASE_DIR / "controller_setting.json"
 
 
 # ============================================================

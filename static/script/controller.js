@@ -10,59 +10,117 @@ document.addEventListener("DOMContentLoaded", function () {
         window.bridge = channel.objects.bridge;
         console.log("✅ Bridge connected");
 
-        const home = document.getElementById("menuHome");
-        const report = document.getElementById("menuReport");
-        const controller = document.getElementById("menuController");
-        const training = document.getElementById("menuTraining");
+        const cameraSelect = document.getElementById("cameraSelect");
+        const slider = document.getElementById("expSlider");
+        const input = document.getElementById("expInput");
 
-        // HOME
-        if (home) {
-            home.onclick = function () {
-                if (bridge.goHome) setTimeout(() => bridge.goHome(), 0);
-            };
+        // camera list
+        const cameras = [
+            { value: "webcam", label: "Webcam" },
+            { value: "hikrobot", label: "HikRobot Camera" },
+            { value: "lucid", label: "Lucid Camera" },
+            { value: "rtsp", label: "RTSP / IP Camera" },
+            { value: "mindvision", label: "MindVision Camera" }
+        ];
+
+        // ------------------------------------------------
+        // Populate dropdown
+        // ------------------------------------------------
+        function populateCameraSelect() {
+
+            cameraSelect.innerHTML = '<option value="">Choose a camera…</option>';
+
+            cameras.forEach(cam => {
+
+                const option = document.createElement("option");
+                option.value = cam.value;
+                option.textContent = cam.label;
+
+                cameraSelect.appendChild(option);
+
+            });
         }
 
-        // REPORT
-        if (report) {
-            report.onclick = function () {
-                if (bridge.goReport) setTimeout(() => bridge.goReport(), 0);
-            };
-        }
+        populateCameraSelect();
 
-        // CONTROLLER (PASSWORD REQUIRED)
-            if (controller) {
-        controller.onclick = function () {
+        // ------------------------------------------------
+        // Load saved settings from Python
+        // ------------------------------------------------
+        if (bridge.getControllerSettings) {
 
-            let password = prompt("Enter Password");
+            bridge.getControllerSettings(function (data) {
 
-            if (password !== null && window.bridge) {
-                bridge.sendPassword(password);
-            }
+                const settings = JSON.parse(data);
 
-        };
-    }
+                if (settings.camera) {
 
-        // TRAINING
-        if (training) {
-            training.onclick = function () {
-                if (bridge.goTraining) setTimeout(() => bridge.goTraining(), 0);
-            };
-        }
+                    cameraSelect.value = settings.camera;
 
-       
-        // CAMERA SELECT
-        if (cameraValue) {
-            cameraValue.addEventListener("change", function () {
+                    if (bridge.selectCamera) {
+                        bridge.selectCamera(settings.camera);
+                    }
 
-                const cam = cameraValue.value;
+                    updateExposureRange(settings.camera);
+                }
 
-                console.log("Selected Camera:", cam);
+                if (settings.exposure) {
 
-                if (bridge.selectCamera) {
-                    bridge.selectCamera(cam);
+                    slider.value = settings.exposure;
+                    input.value = settings.exposure;
+
                 }
 
             });
+
+        }
+
+        // ------------------------------------------------
+        // Camera change
+        // ------------------------------------------------
+        cameraSelect.addEventListener("change", function () {
+
+            const cam = cameraSelect.value;
+
+            if (!cam) return;
+
+            console.log("Selected Camera:", cam);
+
+            updateExposureRange(cam);
+
+            if (bridge.selectCamera) {
+                bridge.selectCamera(cam);
+            }
+
+        });
+
+        // ------------------------------------------------
+        // Save button
+        // ------------------------------------------------
+        const saveBtn = document.getElementById("saveSettingsBtn");
+
+        if (saveBtn) {
+
+            saveBtn.onclick = function () {
+
+                const camera = cameraSelect.value;
+                const exposure = slider.value;
+
+                if (!camera) {
+                    alert("Please select camera");
+                    return;
+                }
+
+                if (bridge) {
+
+                    bridge.setExposure(exposure);
+                    bridge.saveControllerSettings(camera, exposure);
+
+                }
+
+                console.log("Saved:", camera, exposure);
+
+            };
+
         }
 
     });
@@ -88,26 +146,31 @@ function submitControllerPassword(){
     }
 
 }
+
+document.addEventListener("DOMContentLoaded", function(){
+
 const saveBtn = document.getElementById("saveSettingsBtn");
 
 if (saveBtn) {
     saveBtn.onclick = function () {
 
         const camera = document.getElementById("cameraValue").value;
-        const exposure = document.getElementById("evSlider").value;
+        const exposure = document.getElementById("expSlider").value;
 
-        bridge.setExposure(exposure);
+        if (bridge) {
 
-        console.log("Saving Settings:");
+            bridge.setExposure(exposure);
+            bridge.saveControllerSettings(camera, exposure);
+
+        }
+
         console.log("Camera:", camera);
         console.log("Exposure:", exposure);
 
-        if (bridge && bridge.saveControllerSettings) {
-            bridge.saveControllerSettings(camera, exposure);
-        }
-
     };
 }
+
+});
 
 
 window.addEventListener("load", () => {

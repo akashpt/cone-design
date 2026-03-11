@@ -7,17 +7,18 @@ document.addEventListener("DOMContentLoaded", function () {
             window.bridge = channel.objects.bridge;
             console.log("Bridge connected");
 
+               loadModelsFromPython();
+
             // camera frames
-              bridge.frame_signal.connect((imageData) => {
+          const img = document.getElementById("video");
 
-        const img = document.getElementById("video");
+  bridge.frame_signal.connect((imageData) => {
 
-        if (!img) return;   // page changed, ignore
+      if (!img) return;
 
-        img.src = "data:image/jpeg;base64," + imageData;
+      img.src = "data:image/jpeg;base64," + imageData;
 
-    });
-
+  });
        
             // report button
             const report = document.getElementById("menuReport");
@@ -244,6 +245,7 @@ function openControllerModal() {
 
 }
 
+
   // ────────────────────────────────────────────────
   //  CONFIRM → Start Inspection
   // ────────────────────────────────────────────────
@@ -258,7 +260,6 @@ modalConfirm.onclick = () => {
     "_" +
     modalYarn.value.trim();
 
-  // Save model list
   if (!modelList.includes(modelName)) {
     modelList.push(modelName);
     localStorage.setItem("texa_trained_models", JSON.stringify(modelList));
@@ -269,8 +270,7 @@ modalConfirm.onclick = () => {
 
   localStorage.setItem("texa_last_model", modelName);
 
-  // Save to Python
-  if (window.bridge && bridge.saveTrainingSettings) {
+  if (window.bridge) {
 
     bridge.saveTrainingSettings(
       modalMaterial.value,
@@ -279,10 +279,6 @@ modalConfirm.onclick = () => {
       modelName
     );
 
-    // ⭐ START CAMERA
-    bridge.startCamera();
-
-    // ⭐ START TRAINING MODE
     const settings = JSON.stringify({
       material: modalMaterial.value,
       count: modalCount.value,
@@ -290,12 +286,14 @@ modalConfirm.onclick = () => {
       model: modelName
     });
 
-    setTimeout(() => {
-      bridge.startContinuousTraining(settings);
-    }, 300);
+    // ⭐ START TRAINING MODE
+    bridge.startContinuousTraining(settings);
+
   }
 
   closeStartModal();
+
+
 
   video.style.display = "block";
   placeholder.style.display = "none";
@@ -315,11 +313,53 @@ modalConfirm.onclick = () => {
       uptimeSec++;
       document.getElementById("mUptime").textContent =
         `${pad(Math.floor(uptimeSec / 60))}:${pad(uptimeSec % 60)}`;
-  }, 100);
+  }, 1000);
 
   startMetrics();
 
 };
+function loadModelsFromPython(){
+
+    if(!bridge) return;
+
+    bridge.getTrainedModels(function(data){
+
+        const models = JSON.parse(data);
+
+        modelList = models;   // ⭐ store globally
+
+        const select = document.getElementById("trainedModelSelect");
+
+        select.innerHTML = '<option value="">— Select model —</option>';
+
+        models.forEach(m => {
+
+            const opt = document.createElement("option");
+            opt.value = m;
+            opt.textContent = m;
+
+            select.appendChild(opt);
+
+        });
+
+    });
+
+}
+function deleteModel(){
+
+    const model = document.getElementById("trainedModelSelect").value;
+
+    if(!model){
+        alert("Select model first");
+        return;
+    }
+
+    if(confirm("Delete model: " + model + " ?")){
+        bridge.deleteTrainedModel(model);
+        location.reload();
+    }
+
+}
 
 
 
@@ -380,7 +420,7 @@ modalConfirm.onclick = () => {
 
     if (window.bridge && bridge.startCamera) {
        bridge.startCamera();
-       bridge.setTrainingMode();
+      
     
     }
 
@@ -400,9 +440,8 @@ modalConfirm.onclick = () => {
     camTag.textContent = "—";
 
   if (window.bridge) {
-    bridge.stopContinuousTraining();  // stop thread
-    bridge.stopCamera();
-    bridge.resetNormalMode();              // stop camera
+  
+    bridge.stopCamera();  // stop camera
   }
 
     video.style.display = "none";

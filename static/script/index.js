@@ -23,6 +23,7 @@ document.addEventListener("DOMContentLoaded", function () {
             window.bridge = channel.objects.bridge;
 
             loadSavedSettings();
+            loadTrainedModels();
 
             bridge.frame_signal.connect(function(imageData) {
                 const img = document.getElementById("video");
@@ -30,6 +31,23 @@ document.addEventListener("DOMContentLoaded", function () {
                     img.src = "data:image/jpeg;base64," + imageData;
                 }
             });
+            bridge.cone_status_signal.connect(function(statuses){
+
+            updateAllCopsStatuses(statuses);
+
+});
+            bridge.cone_status_signal.connect(function(statusArray){
+
+             updateAllCopsStatuses(statusArray);
+
+
+             bridge.setPredictionSettings(
+        document.getElementById("good").value,
+        document.getElementById("threshold").value
+    );
+    
+
+});
         });
     } else {
         console.warn("Qt WebChannel not available – running in browser/test mode");
@@ -46,30 +64,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const btnStart = document.getElementById("btnStart");
     const btnStop = document.getElementById("btnStop");
 
-    // if (btnStart) {
-    //     btnStart.addEventListener("click", function () {
-
-    //         if (!window.bridge) return;
-
-    //         btnStart.disabled = true;
-    //         btnStop.disabled = false;
-
-    //         bridge.startCamera();
-    //     });
-    // }
-
-    // if (btnStop) {
-    //     btnStop.addEventListener("click", function () {
-
-    //         if (!window.bridge) return;
-
-    //         btnStop.disabled = true;
-    //         btnStart.disabled = false;
-
-    //         bridge.stopCamera();
-    //     });
-    // }
-
+   
     // ───────────────────────────────────────────────────────────────
     // NEW CONTROL LOGIC: OK + RESET + LOCK AFTER CONFIRM + MENU DISABLE
     // ───────────────────────────────────────────────────────────────
@@ -332,6 +327,58 @@ function loadSavedSettings(){
     });
 
 }
+
+
+function loadTrainedModels(){
+
+    if(!bridge) return;
+
+    bridge.getTrainedModels(function(data){
+
+        const models = JSON.parse(data);
+
+        const materialSet = new Set();
+        const countSet = new Set();
+        const yarnSet = new Set();
+
+        models.forEach(model => {
+
+            const parts = model.split("_");
+
+            if(parts.length === 3){
+                materialSet.add(parts[0]);
+                countSet.add(parts[1]);
+                yarnSet.add(parts[2]);
+            }
+
+        });
+
+        const materialSelect = document.getElementById("material");
+        const countSelect = document.getElementById("count");
+        const yarnSelect = document.getElementById("yarn");
+
+        materialSet.forEach(v=>{
+            const opt=document.createElement("option");
+            opt.text=v;
+            materialSelect.add(opt);
+        });
+
+        countSet.forEach(v=>{
+            const opt=document.createElement("option");
+            opt.text=v;
+            countSelect.add(opt);
+        });
+
+        yarnSet.forEach(v=>{
+            const opt=document.createElement("option");
+            opt.text=v;
+            yarnSelect.add(opt);
+        });
+
+    });
+
+}
+
 
 
     window.addEventListener("load", () => {

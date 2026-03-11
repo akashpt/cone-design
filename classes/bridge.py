@@ -13,7 +13,8 @@ from classes.webcam import WebcamCamera
 from classes.lucidcamera import LucidCamera
 from classes.mindvision_cam import MindVisionCamera
 from classes.hikrobot import HikRobotCamera
-
+from classes.training import TrainingDetector
+from classes.prediction import PredictionDetector
 
 
 
@@ -26,7 +27,7 @@ def controller_access_required(func):
         if not self.controller_access:
             print("🚫 Controller access denied → Home page")
 
-            self.stop_camera()
+            self.stopCamera()
             self.app_ref.load_page("index.html")
             return
 
@@ -36,36 +37,142 @@ def controller_access_required(func):
 
 class TrainingWorker(QObject):
 
+    result_ready = pyqtSignal(object)
     status = pyqtSignal(str)
-    finished = pyqtSignal()
 
-    def __init__(self, bridge, interval_ms=2000):
+    def __init__(self, trainer):
+        super().__init__()
+        self.trainer = trainer
+        self.running = True
+        self.busy = False
+
+    @pyqtSlot(object, str)
+    def run_training(self, frame, model_key):
+
+        if not self.running or self.busy:
+            return
+
+        self.busy = True
+
+        try:
+
+            result = self.trainer.train_from_image(frame, model_key)
+
+            self.result_ready.emit(result)
+
+        except Exception as e:
+
+            self.status.emit(f"Training error: {e}")
+
+        finally:
+            self.busy = False
+
+    def stop(self):
+        self.running = False
+
+class CameraGrabWorker(QObject):
+
+    frame_ready = pyqtSignal(object)
+
+    def __init__(self, bridge):
         super().__init__()
         self.bridge = bridge
-        self.interval_ms = interval_ms
-        self._running = False
+        self.running = False
+        self.camera = None
 
     @pyqtSlot()
     def run(self):
 
-        self._running = True
-        self.status.emit("🟢 Continuous Training Started")
+        self.running = True
 
-        while self._running:
-            QThread.msleep(self.interval_ms)
+        # open camera
+        if self.bridge.camera_type == "webcam":
+            self.camera = WebcamCamera()
 
-        self.status.emit("🔴 Continuous Training Stopped")
-        self.finished.emit()
+        elif self.bridge.camera_type == "lucid":
+            self.camera = LucidCamera()
+
+        elif self.bridge.camera_type == "mindvision":
+            self.camera = MindVisionCamera()
+
+        elif self.bridge.camera_type == "hikrobot":
+            self.camera = HikRobotCamera()
+
+        else:
+            print("Invalid camera")
+            return
+
+        self.camera.start()
+
+        while self.running:
+
+            frame = self.camera.get_frame()
+
+            if not self.running:
+                break
+
+            if frame is not None:
+                try:
+                    self.frame_ready.emit(frame)
+                except RuntimeError:
+                    break
+
+        QThread.msleep(10)
+
+        if self.camera:
+            self.camera.stop()
 
     def stop(self):
-        self._running = False
+        print("Stopping camera worker")
+        self.running = False
 
+class PredictionWorker(QObject):
 
+    result_ready = pyqtSignal(object, object, object)
+    status = pyqtSignal(str)
+    
+
+    def __init__(self, predictor):
+        super().__init__()
+        self.predictor = predictor
+        self.running = True
+        self.busy = False
+
+    @pyqtSlot(object, str)
+    def run_prediction(self, frame, model_key):
+
+        if not self.running or self.busy:
+            return
+
+        self.busy = True
+
+        try:
+
+            vis, results, bits = self.predictor.process_frame(
+                frame,
+                model_key
+            )
+
+            self.result_ready.emit(vis, results, bits)
+
+        except Exception as e:
+
+            self.status.emit(f"Prediction error: {e}")
+
+        finally:
+            self.busy = False
+
+    def stop(self):
+        self.running = False
 
 class Bridge(QObject):
 
     frame_signal = pyqtSignal(str)
     controller_open_signal = pyqtSignal()
+    request_prediction = pyqtSignal(object, str)
+    request_training = pyqtSignal(object, str)
+    cone_status_signal = pyqtSignal(list)
+
 
     def __init__(self, app_ref):
         super().__init__()
@@ -82,18 +189,28 @@ class Bridge(QObject):
 
         self.load_controller_settings()
 
-        self.current_interval = 30
+         # camera thread
+        self.camera_thread = None
+        self.camera_worker = None
 
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.grab_frame)
+
+        # prediction thread
+        self.pred_thread = None
+        self.pred_worker = None
+
+        # training thread
+        self.train_thread = None
+        self.train_worker = None
 
         self.prev_time = 0
         self.fps = 0
-
+        self.model_key = None
         # ---------------- TRAINING ----------------
-        self.training_thread = None
-        self.training_worker = None
+        self.trainer = TrainingDetector()
+        self.predictor =PredictionDetector()
+       
         self.training_active = False
+        self.first_training_done = False
 
         # ---------------- PASSWORD ----------------
         self.entered_password = ""
@@ -139,7 +256,7 @@ class Bridge(QObject):
         print("Camera Selected from UI:", cam_type)
 
         # stop running camera
-        self.stop_camera()
+        self.stopCamera()
 
         # set new camera type
         self.camera_type = cam_type
@@ -150,17 +267,15 @@ class Bridge(QObject):
     @pyqtSlot(str)
     def setExposure(self, exposure):
 
-        print("Exposure received from UI:", exposure)
+        # print("Exposure received from UI:", exposure)
 
         self.exposure_value = float(exposure)
-
-        if self.camera:
+        if self.camera_worker and self.camera_worker.camera:
             try:
-                self.camera.set_exposure(self.exposure_value)
+                self.camera_worker.camera.set_exposure(self.exposure_value)
                 print("Exposure applied")
             except Exception as e:
                 print("Exposure apply failed:", e)
-
 
     @pyqtSlot(result=str)
     def getSavedSettings(self):
@@ -185,85 +300,147 @@ class Bridge(QObject):
 
         print("Inspection started")
 
-        self.training_active = False
-        self.last_count_signal = 0
-        
-        self.current_interval = 30
+        if self.camera_thread:
+            print("Camera already running")
+            return
 
-        self.start_camera()
+        settings = json.loads(self.getSavedSettings())
 
-    # @pyqtSlot()
-    # def stopCamera(self):
-    #     self.stop_camera()
+        material = settings.get("material")
+        count = settings.get("count")
+        yarn = settings.get("yarn")
+
+        if material and count and yarn:
+            self.model_key = f"{material}_{count}_{yarn}"
+
+        self.camera_thread = QThread()
+        self.camera_worker = CameraGrabWorker(self)
+
+        self.camera_worker.moveToThread(self.camera_thread)
+
+        self.camera_thread.started.connect(self.camera_worker.run)
+
+        self.camera_worker.frame_ready.connect(self.on_new_frame)
+
+        self.camera_thread.start()
+
+
+        # start prediction thread
+
+        self.pred_thread = QThread()
+
+        self.pred_worker = PredictionWorker(self.predictor)
+
+        self.pred_worker.moveToThread(self.pred_thread)
+
+        self.request_prediction.connect(self.pred_worker.run_prediction)
+
+        self.pred_worker.result_ready.connect(self.on_prediction_result)
+
+        self.pred_thread.start()
+
+        # start training thread
+
+        self.train_thread = QThread()
+
+        self.train_worker = TrainingWorker(self.trainer)
+
+        self.train_worker.moveToThread(self.train_thread)
+
+        self.request_training.connect(self.train_worker.run_training)
+
+        self.train_worker.result_ready.connect(self.on_training_result)
+
+        self.train_thread.start()
 
     @pyqtSlot()
     def stopCamera(self):
-        self.timer.stop() # Stop the timer first!
-        if self.camera:
-            self.camera.stop()
-            self.camera = None # Set to None so start_camera can re-init
-        self.prev_time = 0 
-        print("Camera Stopped and Cleaned")
-    
+
+        # stop camera worker
+        if self.camera_worker:
+           self.camera_worker.running = False
+
+        # stop camera thread
+        if self.camera_thread:
+            self.camera_thread.requestInterruption()
+            self.camera_thread.quit()
+            self.camera_thread.wait()
+
+        # clear references
+        self.camera_worker = None
+        self.camera_thread = None
+
+        # stop prediction worker
+        if self.pred_worker:
+            self.pred_worker.stop()
+
+        if self.pred_thread:
+            self.pred_thread.quit()
+            self.pred_thread.wait()
+
+        self.pred_worker = None
+        self.pred_thread = None
+
+        if self.train_worker:
+            self.train_worker.stop()
+
+        if self.train_thread:
+            self.train_thread.quit()
+            self.train_thread.wait()
+
+        self.train_worker = None
+        self.train_thread = None
+
+        print("Camera stopped")
+
+    @pyqtSlot(str,str)
+    def setPredictionSettings(self, green, threshold):
+
+        self.predictor.green = int(green) if green else None
+        self.predictor.threshold = int(threshold) if threshold else None
+            
     @pyqtSlot()
     def startTraining(self):
-        print("Training started")
-        self.stop_camera()
-        self.start_training_process() 
+
+        print("Training page opened")
+
+        self.training_active = False
+        self.stopCamera()
+
+        # show static training image
+        self.showTrainingStaticImage()
+        
 
     @pyqtSlot()
-    def startTrainingCapture(self):    
-        self.start_camera()  
+    def startTrainingCapture(self):
 
-    @pyqtSlot()
-    def setTrainingMode(self):
-        self.current_interval = 500
-        self.timer.start(self.current_interval)
+        print("Training capture started")
 
-    @pyqtSlot()
-    def resetNormalMode(self):
-        self.current_interval = 30
-        self.timer.start(self.current_interval)
+        self.training_active = True
 
+        self.startCamera()
+
+   
     @pyqtSlot(str)
     def startContinuousTraining(self, settings):
 
         print("Continuous training started")
-        print("Received settings:", settings)
 
-        # convert JSON string → python dict
         settings_data = json.loads(settings)
 
         self.material = settings_data["material"]
         self.count = settings_data["count"]
         self.yarn = settings_data["yarn"]
 
-        # print("Material:", self.material)
-        # print("Count:", self.count)
-        # print("Yarn:", self.yarn)
-
         self.training_active = True
         self.last_count_signal = 0
 
-        # slower capture for training
-        self.current_interval = 500
+        # run static training first
+        self.run_static_training()
 
-
-        # start camera
-        self.start_camera()
-
-        # start training worker
-        self.start_training_process()
-
-    @pyqtSlot()
-    def stopContinuousTraining(self):
-
-        self.training_active = False
-
-        if self.training_worker:
-            self.training_worker.stop()
-
-        print("Training stopped")
+        # now enable PLC training
+        self.training_active = True
+        self.startCamera()
 #--------------------------------------------
             
     @pyqtSlot(str, str, str)
@@ -284,7 +461,8 @@ class Bridge(QObject):
 
         print("Saving Controller Settings")
 
-        self.stop_camera()
+        if self.camera_thread:
+           self.stopCamera()
 
         self.camera_type = camera
         self.exposure_value = float(exposure)
@@ -302,9 +480,9 @@ class Bridge(QObject):
         print("Controller settings saved:", data)
 
         # Apply exposure if camera already running
-        if self.camera:
+        if self.camera_worker and self.camera_worker.camera:
             try:
-                self.camera.set_exposure(self.exposure_value)
+                self.camera_worker.camera.set_exposure(self.exposure_value)
                 print("Exposure applied")
             except Exception as e:
                 print("Exposure set failed:", e)
@@ -326,14 +504,15 @@ class Bridge(QObject):
             "exposure": 5000
         })        
 
+    
 
     @pyqtSlot(result=str)
     def getTrainedModels(self):
 
-        models = []
+        models = set()
 
         if not TRAINING_IMAGES_DIR.exists():
-            return json.dumps(models)
+            return json.dumps([])
 
         for material in TRAINING_IMAGES_DIR.iterdir():
 
@@ -351,32 +530,105 @@ class Bridge(QObject):
                         continue
 
                     model = f"{material.name}_{count.name}_{yarn.name}"
-                    models.append(model)
+                    models.add(model)
 
-        print("Available models:", models)
+        models_list = sorted(list(models))
 
-        return json.dumps(models)
-            
+        print("Available models:", models_list)
+
+        return json.dumps(models_list)
+
+
+
+    @pyqtSlot()
+    def run_static_training(self):
+
+        print("Running static training images")
+
+        static_dir = BASE_DIR / "static" / "img"/"training"
+
+        images = sorted(static_dir.glob("*.bmp"))
+
+        if not images:
+            print("No static training images found")
+            return
+
+        if not (self.material and self.count and self.yarn):
+            print("Training settings not set yet")
+            return
+
+        model_key = f"{self.material}_{self.count}_{self.yarn}"
+
+        for img_path in images:
+
+            print("Training using:", img_path)
+
+            img = cv2.imread(str(img_path))
+
+            # show image in UI
+            _, buffer = cv2.imencode(".jpg", img)
+            jpg = base64.b64encode(buffer).decode()
+            self.frame_signal.emit(jpg)
+
+            result = self.trainer.train_from_image(img, model_key)
+
+            print("Training result:", result)
+
+            # QThread.msleep(800)   # small delay
+            time.sleep(0.8)
+
+
+    @pyqtSlot(str)
+    def deleteTrainedModel(self, model_name):
+
+        print("Deleting model:", model_name)
+
+        ref_file = BASE_DIR / "models" / f"{model_name}_reference.csv"
+        train_file = BASE_DIR / "models" / f"{model_name}_training.csv"
+
+        try:
+
+            if ref_file.exists():
+                os.remove(ref_file)
+                print("Deleted:", ref_file)
+
+            if train_file.exists():
+                os.remove(train_file)
+                print("Deleted:", train_file)
+
+            print("Model deleted successfully")
+
+        except Exception as e:
+            print("Delete error:", e)
 
     # -------- NAVIGATION ----------
     @pyqtSlot()
     def goHome(self):
 
         self.controller_access = False
-        self.stop_camera()
+        self.stopCamera()
         self.app_ref.load_page("index.html")
 
     @pyqtSlot()
     def goReport(self):
         self.controller_access = False
-        self.stop_camera()
+        self.stopCamera()
         self.app_ref.open_report_window()
 
+    # @pyqtSlot()
+    # def goTraining(self):
+    #     self.controller_access = False
+    #     self.stopCamera()
+    #     self.app_ref.load_page("training.html")
     @pyqtSlot()
     def goTraining(self):
+        print("training page")
         self.controller_access = False
-        self.stop_camera()
+        self.stopCamera()
+
         self.app_ref.load_page("training.html")
+
+      
         
     @pyqtSlot()
     @controller_access_required
@@ -384,129 +636,31 @@ class Bridge(QObject):
 
         print(">>> goController SLOT CALLED")
 
-        self.stop_camera()
+        self.stopCamera()
         self.app_ref.load_page("controller.html")
 
 
 #----------------------------------------------------------
-
-    def start_camera(self):
-
-        # prevent multiple starts
-        if self.timer.isActive():
-            print("Camera already running")
-            return
-
-        # create camera object if not exists
-        if self.camera is None:
-
-            if self.camera_type == "webcam":
-                self.camera = WebcamCamera()
-
-            elif self.camera_type == "lucid":
-                self.camera = LucidCamera()
-
-            elif self.camera_type == "mindvision":
-                self.camera = MindVisionCamera()
-
-            elif self.camera_type == "hikrobot":
-                self.camera = HikRobotCamera()
-
-            else:
-                print("Invalid camera type")
-                return
-
-        # start camera
-        self.camera.start()
-
-        # check camera started
-        if hasattr(self.camera, "hCamera") and self.camera.hCamera == 0:
-            print("Camera failed to start")
-            self.camera = None
-            return
-        print(f"Starting camera: {self.camera_type}")
-
-        if hasattr(self, "exposure_value") and self.camera:
-            try:
-                self.camera.set_exposure(self.exposure_value)
-            except:
-                print("Exposure not applied (camera not ready)")
-
-  
-
-        # start frame timer
-        self.timer.start(self.current_interval)
-
-    def stop_camera(self):
-
-            self.timer.stop()
-            self.fps=0
-            self.prev_time=0
-            if self.camera:
-                self.camera.stop()
-                self.camera = None
-
-            print("Camera Stopped")
-
-    def grab_frame(self):
-
-        if not self.camera:
-            return
-
-        try:
-            frame = self.camera.get_frame()
-        except:
-            return
-
-        if frame is None:
-            return
-
-        # ---------- FPS ----------
-        current_time = time.time()
-
-        if self.prev_time != 0:
-            self.fps = 1 / (current_time - self.prev_time)
-
-        self.prev_time = current_time
-
-        cv2.putText(frame,
-                    f"FPS: {int(self.fps)}",
-                    (20,40),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    (0,255,0),
-                    2)
-
-        # ---------- SEND FRAME ----------
-        _, buffer = cv2.imencode(".jpg", frame)
-        jpg = base64.b64encode(buffer).decode()
-
-        self.frame_signal.emit(jpg)
-
-
-        # ====================================
-        # PLC SIGNAL (READ ONLY ONCE)
-        # ====================================
+    def on_new_frame(self, frame):
 
         signal = count_status()
 
-
-        # ====================================
-        # INSPECTION MODE
-        # ====================================
-
+        # -------- INSPECTION MODE --------
         if not self.training_active:
+
+            _, buffer = cv2.imencode(".jpg", frame)
+            jpg = base64.b64encode(buffer).decode()
+            self.frame_signal.emit(jpg)
 
             if signal == 1 and self.last_count_signal == 0:
 
                 print("PLC trigger detected (Inspection)")
 
-                self.run_prediction(frame)
+                if self.model_key:
+                    self.request_prediction.emit(frame, self.model_key)
 
-
-        # ====================================
-        # TRAINING MODE
-        # ====================================
+        # -------- TRAINING MODE --------
+       
 
         else:
 
@@ -524,15 +678,23 @@ class Bridge(QObject):
                     save_dir.mkdir(parents=True, exist_ok=True)
 
                     ts = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+
                     save_path = save_dir / f"train_{ts}.jpg"
 
                     cv2.imwrite(str(save_path), frame)
 
-                    print("Training image saved:", save_path)
+                    model_key = f"{material}_{count}_{yarn}"
 
+                    # show captured frame in UI
+                    _, buffer = cv2.imencode(".jpg", frame)
+                    jpg = base64.b64encode(buffer).decode()
+                    self.frame_signal.emit(jpg)
 
-        # update PLC state
+                    # run training
+                    self.request_training.emit(frame, model_key)
+
         self.last_count_signal = signal
+   
     #-------- SETTINGS SAVE --------
 
     def save_Settings(self, material, count, yarn):
@@ -549,32 +711,7 @@ class Bridge(QObject):
 
     # --------- TRAINING CONTROL ----------
  
-    def start_training_process(self):
-
-        if self.training_thread:
-            print("Training already running")
-            return
-
-        print("Starting training worker thread")
-
-        self.training_thread = QThread()
-
-        self.training_worker = TrainingWorker(self)
-
-        self.training_worker.moveToThread(self.training_thread)
-
-        # thread start
-        self.training_thread.started.connect(self.training_worker.run)
-
-        # thread finish cleanup
-        self.training_worker.finished.connect(self.training_thread.quit)
-        self.training_worker.finished.connect(self.training_worker.deleteLater)
-        self.training_thread.finished.connect(self.training_thread.deleteLater)
-
-        self.training_thread.start()
-
-        self.training_active = True  
-
+ 
     def save_training_settings(self, material, count, yarn, model):
         data={
             "material":material,
@@ -590,22 +727,49 @@ class Bridge(QObject):
 
         print("Training settings saved:", data) 
 
+    def on_training_result(self, result):
 
+        if result.get("ok"):
 
-    def run_prediction(self, frame):
+            print("Training success")
 
-        print("Running prediction...")
+        else:
 
-        # Example placeholder
-        # Replace with your AI model later
+            print("Training skipped: No threads detected")
 
-        result = "GOOD"
+    def on_prediction_result(self, vis, results, bits):
 
-        print("Prediction result:", result)
+            # show frame
+            _, buffer = cv2.imencode(".jpg", vis)
+            jpg = base64.b64encode(buffer).decode()
+            self.frame_signal.emit(jpg)
 
-        if result == "BAD":
-            gripper_function([1,0,0,0])   
+            print("Thread Results:", results)
+            print("PLC Bits:", bits)
 
+            statuses = ["", "", "", ""]
+
+            for i, r in enumerate(results):
+
+                if isinstance(r, dict):
+                    cone_id = r["cone"]
+                    status = r["status"]
+                    statuses[cone_id - 1] = status
+
+                else:
+                    statuses[i] = r
+
+            print("Final Statuses:", statuses)
+
+            # ⭐ SEND TO UI
+            self.cone_status_signal.emit(statuses)
+
+            if "DEFECT" in statuses:
+                plc_bits = [int(b) for b in bits]
+                gripper_function(plc_bits)
+
+     
+            
     def load_controller_settings(self):
 
         settings_file = BASE_DIR / "controller_settings.json"

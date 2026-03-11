@@ -1,647 +1,626 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Texa | COPS - Controller</title>
 
-    <link rel="stylesheet" href="../static/css/all.min.css" />
-    <link rel="stylesheet" href="../static/css/style.css" />
-    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Texa | COPS - Controller</title>
 
-    <style>
-      /* ────────────────────────────────────────────── */
-      /* Your existing styles remain unchanged */
-      /* I only added minor improvements for better UX */
-      /* ────────────────────────────────────────────── */
+  <link rel="stylesheet" href="../static/css/all.min.css" />
+  <link rel="stylesheet" href="../static/css/style.css" />
+  <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+ 
 
-      .text-center {
-        text-align: center;
-      }
-      .text-end {
-        text-align: end;
-      }
-      .pb-4 {
-        padding-bottom: 15px;
-      }
-      .pt-4 {
-        padding-top: 15px;
-      }
+  <style>
+    /* ────────────────────────────────────────────── */
+    /* Your existing styles remain unchanged */
+    /* I only added minor improvements for better UX */
+    /* ────────────────────────────────────────────── */
 
-      :root {
-        --font-sans: "Inter", sans-serif;
-        --primary: #722f37;
-        --primary-d: #5a242c;
-        --primary-l: #9a5a62;
-        --primary-xl: #f8f0f1;
-        --bg: #f0f2f4;
-        --card: #ffffff;
-        --text: #1a1f2e;
-        --muted: #6b7280;
-        --border: #e2e6ea;
-        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
-      }
+    .text-center {
+      text-align: center;
+    }
 
-      body {
-        background: var(--bg);
-        font-family: var(--font-sans);
-        color: var(--text);
-        margin: 0;
-      }
+    .text-end {
+      text-align: end;
+    }
 
-      .camera-settings {
-        padding: 28px;
-        background: var(--card);
-        border-radius: 16px;
-        margin: 32px;
-        box-shadow: var(--shadow-sm);
-        height: fit-content;
-        width: 100%;
-      }
+    .pb-4 {
+      padding-bottom: 15px;
+    }
 
-      .camera-settings-flex {
-        display: flex;
-        justify-content: space-between;
-        gap: 40px;
-      }
+    .pt-4 {
+      padding-top: 15px;
+    }
 
-      h3 {
-        margin: 0 0 24px 0;
-        color: var(--primary);
-        font-size: 1.4rem;
-        font-weight: 600;
-      }
+    :root {
+      --font-sans: "Inter", sans-serif;
+      --primary: #722f37;
+      --primary-d: #5a242c;
+      --primary-l: #9a5a62;
+      --primary-xl: #f8f0f1;
+      --bg: #f0f2f4;
+      --card: #ffffff;
+      --text: #1a1f2e;
+      --muted: #6b7280;
+      --border: #e2e6ea;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
 
-      .field {
-        margin-bottom: 28px;
-      }
+    body {
+      background: var(--bg);
+      font-family: var(--font-sans);
+      color: var(--text);
+      margin: 0;
+    }
 
-      label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: 500;
-        color: var(--text);
-        font-size: 0.98rem;
-      }
+    .camera-settings {
+      padding: 28px;
+      background: var(--card);
+      border-radius: 16px;
+      margin: 32px;
+      box-shadow: var(--shadow-sm);
+      height: fit-content;
+      width: 100%;
+    }
 
-      .exposure-row {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
+    .camera-settings-flex {
+      display: flex;
+      justify-content: space-between;
+      gap: 40px;
+    }
 
-      .exp-btn {
-        width: 36px;
-        height: 36px;
-        border-radius: 8px;
-        border: 1.5px solid var(--border);
-        background: white;
-        color: var(--text);
-        font-size: 1.15rem;
-        font-weight: 600;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        transition: all 0.15s;
-        user-select: none;
-      }
+    h3 {
+      margin: 0 0 24px 0;
+      color: var(--primary);
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
 
-      .exp-btn:hover {
-        border-color: var(--primary);
-        color: var(--primary);
-        background: var(--primary-xl);
-      }
+    .field {
+      margin-bottom: 28px;
+    }
 
-      .exp-btn:active {
-        transform: scale(0.93);
-      }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--text);
+      font-size: 0.98rem;
+    }
 
-      .exp-slider-wrap {
-        flex: 1;
-        position: relative;
-        margin: 0 20px;
-      }
+    .exposure-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
 
-      .exp-slider {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 100%;
-        height: 6px;
-        border-radius: 999px;
-        outline: none;
-        cursor: pointer;
-        background: #e2e6ea;
-      }
+    .exp-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 1.5px solid var(--border);
+      background: white;
+      color: var(--text);
+      font-size: 1.15rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s;
+      user-select: none;
+    }
 
-      .exp-slider::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        background: white;
-        border: 2.5px solid var(--primary);
-        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.15);
-        cursor: pointer;
-      }
+    .exp-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-xl);
+    }
 
-      .exp-slider::-webkit-slider-thumb:hover {
-        transform: scale(1.1);
-        box-shadow: 0 2px 10px rgba(114, 47, 55, 0.25);
-      }
+    .exp-btn:active {
+      transform: scale(0.93);
+    }
 
-      .exp-input {
-        width: 110px;
-        height: 36px;
-        border: 1.5px solid var(--border);
-        border-radius: 8px;
-        text-align: center;
-        font-size: 0.95rem;
-        font-weight: 600;
-        font-family: monospace;
-        background: white;
-        outline: none;
-        flex-shrink: 0;
-      }
+    .exp-slider-wrap {
+      flex: 1;
+      position: relative;
+      margin: 0 20px;
+    }
 
-      .exp-input:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(114, 47, 55, 0.1);
-      }
+    .exp-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 999px;
+      outline: none;
+      cursor: pointer;
+      background: #e2e6ea;
+    }
 
-      .exp-scale {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 6px;
-        padding: 0 1px;
-      }
+    .exp-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: white;
+      border: 2.5px solid var(--primary);
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.15);
+      cursor: pointer;
+    }
 
-      .exp-scale span {
-        font-size: 0.72rem;
-        color: var(--muted);
-        font-family: monospace;
-      }
+    .exp-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
+      box-shadow: 0 2px 10px rgba(114, 47, 55, 0.25);
+    }
 
-      .exp-scale span.center {
-        font-weight: 600;
-        color: var(--primary);
-      }
+    .exp-input {
+      width: 110px;
+      height: 36px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      text-align: center;
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: monospace;
+      background: white;
+      outline: none;
+      flex-shrink: 0;
+    }
 
-      .help {
-        font-size: 0.8rem;
-        color: var(--muted);
-        margin-top: 10px;
-      }
+    .exp-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(114, 47, 55, 0.1);
+    }
 
-      .save_btn {
-        border: 1px solid var(--primary);
-        background: var(--primary);
-        color: white;
-        padding: 10px 24px;
-        border-radius: 8px;
-        cursor: pointer;
-        font-weight: 500;
-      }
+    .exp-scale {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      padding: 0 1px;
+    }
 
-      .save_btn:hover {
-        background: white;
-        color: var(--primary);
-      }
-      .ml-4{
-        margin-right: 15px;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="loaderDots" class="dots-loader">
-      <div class="dot"></div>
-      <div class="dot"></div>
-      <div class="dot"></div>
+    .exp-scale span {
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-family: monospace;
+    }
+
+    .exp-scale span.center {
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .help {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+
+    .save_btn {
+      border: 1px solid var(--primary);
+      background: var(--primary);
+      color: white;
+      padding: 10px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .save_btn:hover {
+      background: white;
+      color: var(--primary);
+    }
+
+    .ml-4 {
+      margin-right: 15px;
+    }
+
+    .toast1 {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: #2ecc71;
+      color: white;
+      padding: 12px 18px;
+      border-radius: 6px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .toast1.done {
+      display: block;
+      opacity: 1;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="loaderDots" class="dots-loader">
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+  </div>
+
+  <!-- Your sidebar / header remains the same -->
+  <aside>
+    <div class="logo-area">
+      <div class="logo_div">
+        <a href="index.html"><img src="../static/img/logo.png" alt="Logo" /></a>
+      </div>
     </div>
-
-    <!-- Your sidebar / header remains the same -->
-    <aside>
-      <div class="logo-area">
-        <div class="logo_div">
-          <a href="index.html"
-            ><img src="../static/img/logo.png" alt="Logo"
-          /></a>
+    <div class="menu-section">
+      <div class="menu-label">Navigation</div>
+      <a href="index.html">
+        <div class="menu-item" id="menuHome">
+          <i class="fa-solid fa-house"></i> HOME
+        </div>
+      </a>
+      <div class="menu-item" id="menuReport">
+        <i class="fa-solid fa-chart-simple"></i> REPORT
+      </div>
+      <div class="menu-item active" id="menuController">
+        <i class="fa-solid fa-sliders"></i> CONTROLLER
+      </div>
+      <a href="training.html">
+        <div class="menu-item" id="menuTraining">
+          <i class="fa-solid fa-microchip"></i> TRAINING
+        </div>
+      </a>
+      <div class="menu-label" style="margin-top: 4px">System</div>
+      <div class="menu-item"><i class="fa-solid fa-gear"></i> SETTINGS</div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="signal-block">
+        <div class="signal-label">COPS Count</div>
+        <div class="signal-value">
+          <span class="signal-dot"></span><span id="signalCount">244</span>
         </div>
       </div>
-      <div class="menu-section">
-        <div class="menu-label">Navigation</div>
-        <a href="index.html"
-          ><div class="menu-item" id="menuHome">
-            <i class="fa-solid fa-house"></i> HOME
-          </div></a
-        >
-        <div class="menu-item" id="menuReport">
-          <i class="fa-solid fa-chart-simple"></i> REPORT
-        </div>
-        <div class="menu-item active" id="menuController">
-          <i class="fa-solid fa-sliders"></i> CONTROLLER
-        </div>
-        <a href="training.html"
-          ><div class="menu-item" id="menuTraining">
-            <i class="fa-solid fa-microchip"></i> TRAINING
-          </div></a
-        >
-        <div class="menu-label" style="margin-top: 4px">System</div>
-        <div class="menu-item"><i class="fa-solid fa-gear"></i> SETTINGS</div>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <div class="header-left">
+        <span class="breadcrumb">COPS Inspection</span>
+        <span class="header-badge">YARN INSPECTION</span>
       </div>
-      <div class="sidebar-footer">
-        <div class="signal-block">
-          <div class="signal-label">COPS Count</div>
-          <div class="signal-value">
-            <span class="signal-dot"></span><span id="signalCount">244</span>
-          </div>
+      <div id="statusPill" class="status-pill waiting">
+        <span class="status-dot"></span>
+        <span id="statusText">WAITING</span>
+      </div>
+      <div class="header-right">
+        <div class="header-user">
+          <i class="fa-solid fa-user" style="opacity: 0.8; font-size: 0.68rem"></i>
         </div>
       </div>
-    </aside>
+    </header>
 
-    <main>
-      <header>
-        <div class="header-left">
-          <span class="breadcrumb">COPS Inspection</span>
-          <span class="header-badge">YARN INSPECTION</span>
-        </div>
-        <div id="statusPill" class="status-pill waiting">
-          <span class="status-dot"></span>
-          <span id="statusText">WAITING</span>
-        </div>
-        <div class="header-right">
-          <div class="header-user">
-            <i
-              class="fa-solid fa-user"
-              style="opacity: 0.8; font-size: 0.68rem"
-            ></i>
-          </div>
-        </div>
-      </header>
+    <div class="content" style="padding: 32px 24px">
+      <div class="camera-settings">
+        <h3 class="text-center">Camera Setup</h3>
 
-      <div class="content" style="padding: 32px 24px">
-        <div class="camera-settings">
-          <h3 class="text-center">Camera Setup</h3>
-
-          <div class="camera-settings-flex">
-            <div style="max-width: 420px">
-              <h3>Select Camera</h3>
-              <div class="field">
-                 <select
-                  id="cameraSelect"
-                  style="
+        <div class="camera-settings-flex">
+          <div style="max-width: 420px">
+            <h3>Select Camera</h3>
+            <div class="field">
+              <select id="cameraSelect" style="
                     width: 100%;
                     padding: 12px 16px;
                     height: 48px;
                     border: 1px solid var(--border);
                     border-radius: 10px;
                     font-size: 1rem;
-                  "
-                >
-                  <option value="" disabled selected>Choose a camera…</option>
-                </select>
-              </div>
-            </div>
-
-            <div style="width: 700px">
-              <h3>Exposure Time</h3>
-              <div class="exposure-row">
-                <button class="exp-btn" id="expMinus" title="Decrease">
-                  −
-                </button>
-
-                <div class="exp-slider-wrap">
-                  <input
-                    type="range"
-                    class="exp-slider"
-                    id="expSlider"
-                    min="10"
-                    max="1000000"
-                    step="10"
-                    value="5000"
-                  />
-                  <div class="exp-scale" id="expScale"></div>
-                </div>
-
-                <button class="exp-btn ml-4" id="expPlus" title="Increase">+</button>
-
-                <input
-                  type="text"
-                  class="exp-input"
-                  id="expInput"
-                  value="5000"
-                  maxlength="12"
-                />
-              </div>
-
-              <div class="help" id="rangeHelp">
-                Select a camera to see supported exposure range
-              </div>
+                  ">
+                <option value="" disabled selected>Choose a camera…</option>
+              </select>
             </div>
           </div>
 
-          <div class="text-end pt-4 pb-4">
-            <button class="save_btn" id="saveSettingsBtn">Save Settings</button>
+          <div style="width: 700px">
+            <h3>Exposure Time</h3>
+            <div class="exposure-row">
+              <button class="exp-btn" id="expMinus" title="Decrease">
+                −
+              </button>
+
+              <div class="exp-slider-wrap">
+                <input type="range" class="exp-slider" id="expSlider" min="10" max="1000000" step="10" value="5000" />
+                <div class="exp-scale" id="expScale"></div>
+              </div>
+
+              <button class="exp-btn ml-4" id="expPlus" title="Increase">+</button>
+
+              <input type="text" class="exp-input" id="expInput" value="5000" maxlength="12" />
+            </div>
+
+            <div class="help" id="rangeHelp">
+              Select a camera to see supported exposure range
+            </div>
           </div>
         </div>
+
+        <div class="text-end pt-4 pb-4">
+          <button class="save_btn" id="saveSettingsBtn">Save Settings</button>
+        </div>
       </div>
-    </main>
-
-    <div class="toast" id="toast">
-      <i class="fa-solid fa-circle-check"></i>
-      <span id="toastMsg">Done.</span>
     </div>
+  </main>
 
-    <script src="../static/script/controller.js"></script>
-    <script>
-      // ──────────────────────────────────────────────
-      // CAMERA & EXPOSURE CONFIG
-      // ──────────────────────────────────────────────
+  <div class="toast1 " id="toast">
+    <i class="fa-solid fa-circle-check"></i>
+    <span id="toastMsg">Done.</span>
+  </div>
 
-      const cameras = [
-        { value: "webcam", label: "Webcam" },
-        { value: "hikrobot", label: "HikRobot Camera" },
-        { value: "lucid", label: "Lucid Camera" },
-        { value: "rtsp", label: "RTSP / IP Camera" },
-        { value: "mindvision", label: "MindVision Camera" },
-      ];
+  <script src="../static/script/controller.js"></script>
+  <script>
+    // ──────────────────────────────────────────────
+    // CAMERA & EXPOSURE CONFIG
+    // ──────────────────────────────────────────────
 
-      const exposureRanges = {
-        webcam: {
-          min: 1,
-          max: 100,
-          unit: "",
-          step: 1,
-          fmt: (v) => v.toString(),
-        },
-        rtsp: {
-          min: 1000,
-          max: 20000,
-          unit: "µs",
-          step: 100,
-          fmt: (v) => v.toString(),
-        },
-        hikrobot: {
-          min: 0,
-          max: 300000,
-          unit: "µs",
-          step: 10,
-          fmt: (v) => v.toLocaleString(),
-        },
-        lucid: {
-          min: 20,
-          max: 300000,
-          unit: "µs",
-          step: 10,
-          fmt: (v) => v.toLocaleString(),
-        },
-        mindvision: {
-          min: 10,
-          max: 100000,
-          unit: "µs",
-          step: 10,
-          fmt: (v) => v.toLocaleString(),
-        },
-        default: {
-          min: 10,
-          max: 10000,
-          unit: "µs",
-          step: 10,
-          fmt: (v) => v.toLocaleString(),
-        },
+    const cameras = [
+      { value: "webcam", label: "Webcam" },
+      { value: "hikrobot", label: "HikRobot Camera" },
+      { value: "lucid", label: "Lucid Camera" },
+      { value: "rtsp", label: "RTSP / IP Camera" },
+      { value: "mindvision", label: "MindVision Camera" },
+    ];
+
+    const exposureRanges = {
+      webcam: {
+        min: 1,
+        max: 100,
+        unit: "",
+        step: 1,
+        fmt: (v) => v.toString(),
+      },
+      rtsp: {
+        min: 1000,
+        max: 20000,
+        unit: "µs",
+        step: 100,
+        fmt: (v) => v.toString(),
+      },
+      hikrobot: {
+        min: 0,
+        max: 300000,
+        unit: "µs",
+        step: 10,
+        fmt: (v) => v.toLocaleString(),
+      },
+      lucid: {
+        min: 20,
+        max: 300000,
+        unit: "µs",
+        step: 10,
+        fmt: (v) => v.toLocaleString(),
+      },
+      mindvision: {
+        min: 10,
+        max: 100000,
+        unit: "µs",
+        step: 10,
+        fmt: (v) => v.toLocaleString(),
+      },
+      default: {
+        min: 10,
+        max: 10000,
+        unit: "µs",
+        step: 10,
+        fmt: (v) => v.toLocaleString(),
+      },
+    };
+
+    // DOM elements
+    const cameraSelect = document.getElementById("cameraSelect");
+    const slider = document.getElementById("expSlider");
+    const input = document.getElementById("expInput");
+    const minusBtn = document.getElementById("expMinus");
+    const plusBtn = document.getElementById("expPlus");
+    const scale = document.getElementById("expScale");
+    const helpText = document.getElementById("rangeHelp");
+    const saveBtn = document.getElementById("saveSettingsBtn");
+
+    let currentRange = exposureRanges.default;
+
+
+    // ──────────────────────────────────────────────
+    // BRIDGE CONNECTION
+    // ──────────────────────────────────────────────
+
+
+
+
+    // ──────────────────────────────────────────────
+    // CORE FUNCTIONS
+    // ──────────────────────────────────────────────
+
+    function formatValue(v) {
+      return (
+        currentRange.fmt(Math.round(v)) +
+        (currentRange.unit ? " " + currentRange.unit : "")
+      );
+    }
+
+    function updateExposureRange(camValue) {
+      currentRange = exposureRanges[camValue] || exposureRanges.default;
+
+      slider.min = currentRange.min;
+      slider.max = currentRange.max;
+      slider.step = currentRange.step;
+
+      let mid =
+        Math.round(
+          (currentRange.min + currentRange.max) / 2 / currentRange.step,
+        ) * currentRange.step;
+      mid = Math.max(currentRange.min, Math.min(currentRange.max, mid));
+
+      slider.value = mid;
+      input.value = formatValue(mid);
+
+      helpText.innerHTML = `Range: ${formatValue(currentRange.min)} – ${formatValue(currentRange.max)}`;
+
+      updateScaleLabels();
+      updateSliderStyle();
+
+      // Optional: send immediately on camera change
+      if (bridge?.setExposure) bridge.setExposure(mid);
+    }
+
+    function updateScaleLabels() {
+      scale.innerHTML = "";
+      const min = Number(slider.min);
+      const max = Number(slider.max);
+      const mid = (min + max) / 2;
+
+      const add = (val, isCenter = false) => {
+        const safe = Math.max(
+          min,
+          Math.min(
+            max,
+            Math.round(val / currentRange.step) * currentRange.step,
+          ),
+        );
+        const span = document.createElement("span");
+        span.textContent = formatValue(safe);
+        if (isCenter) span.classList.add("center");
+        scale.appendChild(span);
       };
 
-      // DOM elements
-      const cameraSelect = document.getElementById("cameraSelect");
-      const slider = document.getElementById("expSlider");
-      const input = document.getElementById("expInput");
-      const minusBtn = document.getElementById("expMinus");
-      const plusBtn = document.getElementById("expPlus");
-      const scale = document.getElementById("expScale");
-      const helpText = document.getElementById("rangeHelp");
-      const saveBtn = document.getElementById("saveSettingsBtn");
+      add(min);
+      add(mid, true);
+      add(max);
+    }
 
-      let currentRange = exposureRanges.default;
-      let bridge = null;
+    function updateSliderStyle() {
+      const val = Number(slider.value);
+      const min = Number(slider.min);
+      const max = Number(slider.max);
+      const pct = max > min ? ((val - min) / (max - min)) * 100 : 0;
+      const mid = (min + max) / 2;
+      const color =
+        val < mid ? "#ef4444" : val > mid ? "#3b82f6" : "var(--primary)";
 
-      // ──────────────────────────────────────────────
-      // BRIDGE CONNECTION
-      // ──────────────────────────────────────────────
+      slider.style.background = `linear-gradient(to right, #e2e6ea 0%, ${color} ${pct}%, #e2e6ea ${pct}%)`;
+      input.style.color = val === mid ? "var(--text)" : color;
+      input.style.borderColor = val === mid ? "var(--border)" : color + "88";
+    }
 
-      new QWebChannel(qt.webChannelTransport, (channel) => {
-        bridge = channel.objects.bridge;
-        console.log("Qt bridge connected");
+    // ──────────────────────────────────────────────
+    // POPULATE CAMERA SELECT
+    // ──────────────────────────────────────────────
 
-        // Try to load saved settings
-        if (bridge?.getControllerSettings) {
-          bridge.getControllerSettings((settingsJson) => {
-            try {
-              const settings = JSON.parse(settingsJson);
-              if (settings.camera) {
-                cameraSelect.value = settings.camera;
-                updateExposureRange(settings.camera);
-                bridge?.selectCamera?.(settings.camera);
-              }
-              if (settings.exposure) {
-                const v = Number(settings.exposure);
-                if (!isNaN(v)) {
-                  slider.value = v;
-                  input.value = formatValue(v);
-                  updateSliderStyle();
-                }
-              }
-            } catch (e) {
-              console.warn("Invalid saved settings", e);
-            }
-          });
-        }
+    function populateCameraSelect() {
+      cameraSelect.innerHTML =
+        '<option value="" disabled selected>Choose a camera…</option>';
+      cameras.forEach((cam) => {
+        const opt = document.createElement("option");
+        opt.value = cam.value;
+        opt.textContent = cam.label;
+        cameraSelect.appendChild(opt);
       });
+    }
 
-      // ──────────────────────────────────────────────
-      // CORE FUNCTIONS
-      // ──────────────────────────────────────────────
+    populateCameraSelect();
 
-      function formatValue(v) {
-        return (
-          currentRange.fmt(Math.round(v)) +
-          (currentRange.unit ? " " + currentRange.unit : "")
-        );
+    // ──────────────────────────────────────────────
+    // EVENT LISTENERS – LIVE UPDATES
+    // ──────────────────────────────────────────────
+
+    cameraSelect.addEventListener("change", () => {
+      const val = cameraSelect.value;
+      if (val) {
+        updateExposureRange(val);
+        bridge?.selectCamera?.(val);
+      }
+    });
+
+    // Slider live update
+    slider.addEventListener("input", () => {
+      const v = Number(slider.value);
+      input.value = formatValue(v);
+      updateSliderStyle();
+      bridge?.setExposure?.(v);
+    });
+
+    // Number input live + cleanup
+    input.addEventListener("input", () => {
+      let v =
+        parseFloat(input.value.replace(/[^0-9.]/g, "")) || currentRange.min;
+      v = Math.max(currentRange.min, Math.min(currentRange.max, v));
+      slider.value = v;
+      input.value = formatValue(v);
+      updateSliderStyle();
+      bridge?.setExposure?.(v);
+    });
+
+    input.addEventListener("blur", () => {
+      let v =
+        parseFloat(input.value.replace(/[^0-9.]/g, "")) || currentRange.min;
+      v = Math.round(v / currentRange.step) * currentRange.step;
+      v = Math.max(currentRange.min, Math.min(currentRange.max, v));
+      slider.value = v;
+      input.value = formatValue(v);
+      updateSliderStyle();
+      bridge?.setExposure?.(v);
+    });
+
+    minusBtn.addEventListener("click", () => {
+      let v = Number(slider.value) - currentRange.step;
+      v = Math.max(currentRange.min, v);
+      slider.value = v;
+      input.value = formatValue(v);
+      updateSliderStyle();
+      bridge?.setExposure?.(v);
+    });
+
+    plusBtn.addEventListener("click", () => {
+      let v = Number(slider.value) + currentRange.step;
+      v = Math.min(currentRange.max, v);
+      slider.value = v;
+      input.value = formatValue(v);
+      updateSliderStyle();
+      bridge?.setExposure?.(v);
+    });
+
+    // Save (persistent settings)
+    saveBtn.addEventListener("click", () => {
+      const camera = cameraSelect.value;
+      const exposure = Number(slider.value);
+
+      if (!camera) {
+        alert("Please select a camera first");
+        return;
       }
 
-      function updateExposureRange(camValue) {
-        currentRange = exposureRanges[camValue] || exposureRanges.default;
+      bridge?.setExposure?.(exposure);
+      bridge?.saveControllerSettings?.(camera, exposure);
 
-        slider.min = currentRange.min;
-        slider.max = currentRange.max;
-        slider.step = currentRange.step;
+      // Optional: show feedback
+      const toast = document.getElementById("toast");
+      const msg = document.getElementById("toastMsg");
+      msg.textContent = "Settings saved";
+      toast.style.display = "flex";
+      setTimeout(() => {
+        toast.style.display = "none";
+      }, 2000);
+    });
 
-        let mid =
-          Math.round(
-            (currentRange.min + currentRange.max) / 2 / currentRange.step,
-          ) * currentRange.step;
-        mid = Math.max(currentRange.min, Math.min(currentRange.max, mid));
+    // Default / fallback
+    updateExposureRange("hikrobot");
 
-        slider.value = mid;
-        input.value = formatValue(mid);
+    // Hide loader
+    window.addEventListener("load", () => {
+      setTimeout(() => {
+        document.getElementById("loaderDots").style.display = "none";
+      }, 1200);
+    });
+  </script>
+</body>
 
-        helpText.innerHTML = `Range: ${formatValue(currentRange.min)} – ${formatValue(currentRange.max)}`;
-
-        updateScaleLabels();
-        updateSliderStyle();
-
-        // Optional: send immediately on camera change
-        if (bridge?.setExposure) bridge.setExposure(mid);
-      }
-
-      function updateScaleLabels() {
-        scale.innerHTML = "";
-        const min = Number(slider.min);
-        const max = Number(slider.max);
-        const mid = (min + max) / 2;
-
-        const add = (val, isCenter = false) => {
-          const safe = Math.max(
-            min,
-            Math.min(
-              max,
-              Math.round(val / currentRange.step) * currentRange.step,
-            ),
-          );
-          const span = document.createElement("span");
-          span.textContent = formatValue(safe);
-          if (isCenter) span.classList.add("center");
-          scale.appendChild(span);
-        };
-
-        add(min);
-        add(mid, true);
-        add(max);
-      }
-
-      function updateSliderStyle() {
-        const val = Number(slider.value);
-        const min = Number(slider.min);
-        const max = Number(slider.max);
-        const pct = max > min ? ((val - min) / (max - min)) * 100 : 0;
-        const mid = (min + max) / 2;
-        const color =
-          val < mid ? "#ef4444" : val > mid ? "#3b82f6" : "var(--primary)";
-
-        slider.style.background = `linear-gradient(to right, #e2e6ea 0%, ${color} ${pct}%, #e2e6ea ${pct}%)`;
-        input.style.color = val === mid ? "var(--text)" : color;
-        input.style.borderColor = val === mid ? "var(--border)" : color + "88";
-      }
-
-      // ──────────────────────────────────────────────
-      // POPULATE CAMERA SELECT
-      // ──────────────────────────────────────────────
-
-      function populateCameraSelect() {
-        cameraSelect.innerHTML =
-          '<option value="" disabled selected>Choose a camera…</option>';
-        cameras.forEach((cam) => {
-          const opt = document.createElement("option");
-          opt.value = cam.value;
-          opt.textContent = cam.label;
-          cameraSelect.appendChild(opt);
-        });
-      }
-
-      populateCameraSelect();
-
-      // ──────────────────────────────────────────────
-      // EVENT LISTENERS – LIVE UPDATES
-      // ──────────────────────────────────────────────
-
-      cameraSelect.addEventListener("change", () => {
-        const val = cameraSelect.value;
-        if (val) {
-          updateExposureRange(val);
-          bridge?.selectCamera?.(val);
-        }
-      });
-
-      // Slider live update
-      slider.addEventListener("input", () => {
-        const v = Number(slider.value);
-        input.value = formatValue(v);
-        updateSliderStyle();
-        bridge?.setExposure?.(v);
-      });
-
-      // Number input live + cleanup
-      input.addEventListener("input", () => {
-        let v =
-          parseFloat(input.value.replace(/[^0-9.]/g, "")) || currentRange.min;
-        v = Math.max(currentRange.min, Math.min(currentRange.max, v));
-        slider.value = v;
-        input.value = formatValue(v);
-        updateSliderStyle();
-        bridge?.setExposure?.(v);
-      });
-
-      input.addEventListener("blur", () => {
-        let v =
-          parseFloat(input.value.replace(/[^0-9.]/g, "")) || currentRange.min;
-        v = Math.round(v / currentRange.step) * currentRange.step;
-        v = Math.max(currentRange.min, Math.min(currentRange.max, v));
-        slider.value = v;
-        input.value = formatValue(v);
-        updateSliderStyle();
-        bridge?.setExposure?.(v);
-      });
-
-      minusBtn.addEventListener("click", () => {
-        let v = Number(slider.value) - currentRange.step;
-        v = Math.max(currentRange.min, v);
-        slider.value = v;
-        input.value = formatValue(v);
-        updateSliderStyle();
-        bridge?.setExposure?.(v);
-      });
-
-      plusBtn.addEventListener("click", () => {
-        let v = Number(slider.value) + currentRange.step;
-        v = Math.min(currentRange.max, v);
-        slider.value = v;
-        input.value = formatValue(v);
-        updateSliderStyle();
-        bridge?.setExposure?.(v);
-      });
-
-      // Save (persistent settings)
-      saveBtn.addEventListener("click", () => {
-        const camera = cameraSelect.value;
-        const exposure = Number(slider.value);
-
-        if (!camera) {
-          alert("Please select a camera first");
-          return;
-        }
-
-        bridge?.setExposure?.(exposure);
-        bridge?.saveControllerSettings?.(camera, exposure);
-
-        // Optional: show feedback
-        const toast = document.getElementById("toast");
-        const msg = document.getElementById("toastMsg");
-        msg.textContent = "Settings saved";
-        toast.style.display = "flex";
-        setTimeout(() => {
-          toast.style.display = "none";
-        }, 2000);
-      });
-
-      // Default / fallback
-      updateExposureRange("hikrobot");
-
-      // Hide loader
-      window.addEventListener("load", () => {
-        setTimeout(() => {
-          document.getElementById("loaderDots").style.display = "none";
-        }, 1200);
-      });
-    </script>
-  </body>
 </html>

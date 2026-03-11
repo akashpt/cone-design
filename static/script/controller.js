@@ -1,127 +1,128 @@
-document.addEventListener("DOMContentLoaded", function () {
+let bridge = null;
 
-    if (typeof qt === "undefined") {
+document.addEventListener("DOMContentLoaded", function(){
+
+    if(typeof qt === "undefined"){
         console.log("Qt bridge not available");
         return;
     }
 
-    new QWebChannel(qt.webChannelTransport, function (channel) {
+    new QWebChannel(qt.webChannelTransport, function(channel){
 
-        window.bridge = channel.objects.bridge;
+        bridge = channel.objects.bridge;
         console.log("✅ Bridge connected");
 
         const cameraSelect = document.getElementById("cameraSelect");
         const slider = document.getElementById("expSlider");
         const input = document.getElementById("expInput");
+        const saveBtn = document.getElementById("saveSettingsBtn");
 
-        // camera list
         const cameras = [
-            { value: "webcam", label: "Webcam" },
-            { value: "hikrobot", label: "HikRobot Camera" },
-            { value: "lucid", label: "Lucid Camera" },
-            { value: "rtsp", label: "RTSP / IP Camera" },
-            { value: "mindvision", label: "MindVision Camera" }
+            { value:"webcam", label:"Webcam"},
+            { value:"hikrobot", label:"HikRobot Camera"},
+            { value:"lucid", label:"Lucid Camera"},
+            { value:"rtsp", label:"RTSP / IP Camera"},
+            { value:"mindvision", label:"MindVision Camera"}
         ];
 
-        // ------------------------------------------------
         // Populate dropdown
-        // ------------------------------------------------
-        function populateCameraSelect() {
+        function populateCameraSelect(){
 
             cameraSelect.innerHTML = '<option value="">Choose a camera…</option>';
 
-            cameras.forEach(cam => {
-
+            cameras.forEach(cam=>{
                 const option = document.createElement("option");
                 option.value = cam.value;
                 option.textContent = cam.label;
-
                 cameraSelect.appendChild(option);
-
             });
+
         }
 
         populateCameraSelect();
 
-        // ------------------------------------------------
-        // Load saved settings from Python
-        // ------------------------------------------------
-        if (bridge.getControllerSettings) {
+        // Toast message
+        function showToast(message){
 
-            bridge.getControllerSettings(function (data) {
+            const toast = document.getElementById("toast");
+            const msg = document.getElementById("toastMsg");
+
+            if(!toast || !msg) return;
+
+            msg.textContent = message;
+            toast.style.display = "flex";
+
+            setTimeout(()=>{
+                toast.style.display = "none";
+            },2000);
+
+        }
+
+        // Load saved controller settings
+        if(bridge.getControllerSettings){
+
+            bridge.getControllerSettings(function(data){
 
                 const settings = JSON.parse(data);
 
-                if (settings.camera) {
-
+                if(settings.camera){
                     cameraSelect.value = settings.camera;
-
-                    if (bridge.selectCamera) {
-                        bridge.selectCamera(settings.camera);
-                    }
-
-                    updateExposureRange(settings.camera);
+                    bridge.selectCamera(settings.camera);
                 }
 
-                if (settings.exposure) {
-
+                if(settings.exposure){
                     slider.value = settings.exposure;
                     input.value = settings.exposure;
-
                 }
 
             });
 
         }
 
-        // ------------------------------------------------
         // Camera change
-        // ------------------------------------------------
-        cameraSelect.addEventListener("change", function () {
+        cameraSelect.addEventListener("change", function(){
 
             const cam = cameraSelect.value;
 
-            if (!cam) return;
+            if(!cam) return;
 
-            console.log("Selected Camera:", cam);
-
-            updateExposureRange(cam);
-
-            if (bridge.selectCamera) {
-                bridge.selectCamera(cam);
-            }
+            bridge.selectCamera(cam);
 
         });
 
-        // ------------------------------------------------
+        // Slider change
+        slider.addEventListener("input", function(){
+
+            input.value = slider.value;
+
+        });
+
+        // Input change
+        input.addEventListener("input", function(){
+
+            slider.value = input.value;
+
+        });
+
         // Save button
-        // ------------------------------------------------
-        const saveBtn = document.getElementById("saveSettingsBtn");
+        saveBtn.onclick = function(){
 
-        if (saveBtn) {
+            const camera = cameraSelect.value;
+            const exposure = slider.value;
 
-            saveBtn.onclick = function () {
+            if(!camera){
+                showToast("Please select camera");
+                return;
+            }
 
-                const camera = cameraSelect.value;
-                const exposure = slider.value;
+            bridge.setExposure(exposure);
+            bridge.saveControllerSettings(camera, exposure);
 
-                if (!camera) {
-                    alert("Please select camera");
-                    return;
-                }
+            console.log("Saved:", camera, exposure);
 
-                if (bridge) {
+            showToast("Settings saved successfully");
 
-                    bridge.setExposure(exposure);
-                    bridge.saveControllerSettings(camera, exposure);
-
-                }
-
-                console.log("Saved:", camera, exposure);
-
-            };
-
-        }
+        };
 
     });
 
@@ -147,30 +148,6 @@ function submitControllerPassword(){
 
 }
 
-document.addEventListener("DOMContentLoaded", function(){
-
-const saveBtn = document.getElementById("saveSettingsBtn");
-
-if (saveBtn) {
-    saveBtn.onclick = function () {
-
-        const camera = document.getElementById("cameraValue").value;
-        const exposure = document.getElementById("expSlider").value;
-
-        if (bridge) {
-
-            bridge.setExposure(exposure);
-            bridge.saveControllerSettings(camera, exposure);
-
-        }
-
-        console.log("Camera:", camera);
-        console.log("Exposure:", exposure);
-
-    };
-}
-
-});
 
 
 window.addEventListener("load", () => {

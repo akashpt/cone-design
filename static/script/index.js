@@ -11,7 +11,7 @@ updateTime();
 // ================= BRIDGE CONNECTION =================
 document.addEventListener("DOMContentLoaded", function () {
 
-      const startBtn = document.getElementById("startBtn");
+      const startBtn = document.getElementById("btnStart");
 
       if(startBtn){
           startBtn.disabled = true;
@@ -22,33 +22,37 @@ document.addEventListener("DOMContentLoaded", function () {
         new QWebChannel(qt.webChannelTransport, function(channel) {
             window.bridge = channel.objects.bridge;
 
-            loadSavedSettings();
+        
             loadTrainedModels();
 
             bridge.frame_signal.connect(function(imageData) {
                 const img = document.getElementById("video");
+
+                    // ⭐ message from Python when navigation blocked
+            if (imageData === "STOP_CAMERA_FIRST") {
+
+                showToast(
+                    "Stop inspection before leaving page",
+                    "fa-triangle-exclamation",
+                    "#f59e0b"
+                );
+
+                return;
+            }
+
                 if (img) {
                     img.src = "data:image/jpeg;base64," + imageData;
                 }
             });
+  
             bridge.cone_status_signal.connect(function(statuses){
-
-            updateAllCopsStatuses(statuses);
-
+    updateAllCopsStatuses(statuses);
 });
-            bridge.cone_status_signal.connect(function(statusArray){
 
-             updateAllCopsStatuses(statusArray);
-
-
-             bridge.setPredictionSettings(
-        document.getElementById("good").value,
-        document.getElementById("threshold").value
-    );
     
 
 });
-        });
+        
     } else {
         console.warn("Qt WebChannel not available – running in browser/test mode");
         window.bridge = {
@@ -243,7 +247,8 @@ document.addEventListener("DOMContentLoaded", function () {
       }, 1000);
 
       startMetrics();
-      bridge.startCamera();
+    //   bridge.startCamera();
+    bridge.startInspection();
 
       updateButtonStates();
     };
@@ -327,6 +332,29 @@ function loadSavedSettings(){
     });
 
 }
+// SEND GREEN + THRESHOLD SETTINGS
+const greenSelect = document.getElementById("green");
+const thresholdSelect = document.getElementById("threshold");
+
+function sendPredictionSettings(){
+
+    if(!window.bridge) return;
+
+    const green = greenSelect.value;
+    const threshold = thresholdSelect.value;
+
+    bridge.setPredictionSettings(green, threshold);
+
+    console.log("Prediction settings sent:", green, threshold);
+}
+
+if(greenSelect){
+    greenSelect.addEventListener("change", sendPredictionSettings);
+}
+
+if(thresholdSelect){
+    thresholdSelect.addEventListener("change", sendPredictionSettings);
+}
 
 
 function loadTrainedModels(){
@@ -374,6 +402,7 @@ function loadTrainedModels(){
             opt.text=v;
             yarnSelect.add(opt);
         });
+            loadSavedSettings();
 
     });
 

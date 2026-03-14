@@ -187,13 +187,22 @@ class PredictionDetector:
                     continue
 
                 limits = row.iloc[0]
-                green_ok = limits.G_min - self.GREEN_MARGIN <= mean_g <= limits.G_max + self.GREEN_MARGIN
+                # green_ok = limits.G_min - self.GREEN_MARGIN <= mean_g <= limits.G_max + self.GREEN_MARGIN
                 # blue_ok = limits.B_min - self.BLUE_MARGIN <= mean_b <= limits.B_max + self.BLUE_MARGIN
-                thick_ok = limits.Th_min - self.THICK_MARGIN <= thickness <= limits.Th_max + self.THICK_MARGIN
+                # thick_ok = limits.Th_min - self.THICK_MARGIN <= thickness <= limits.Th_max + self.THICK_MARGIN
+
+                green_margin = self.green_margin if self.green_margin is not None else self.DEFAULT_GREEN_MARGIN
+
+                green_ok =limits.G_min - green_margin <= mean_g <= limits.G_max + green_margin
+
+                threshold_margin = self.threshold_margin if self.threshold_margin is not None else self.DEFAULT_THRESHOLD_MARGIN
+
+                thick_ok = limits.Th_min - threshold_margin <= thickness <= limits.Th_max + threshold_margin
+
                 den_ok = limits.D_min - self.DENSITY_MARGIN <= density <= limits.D_max + self.DENSITY_MARGIN
 
                 # defect = not (blue_ok and thick_ok and den_ok)
-                defect = not (green_ok and thick_ok and den_ok)
+                defect = not (green_ok and thick_ok )
                 color = (0, 0, 255) if defect else (0, 255, 0)
                 cv2.rectangle(vis, (x0, y0), (x1, y1), color, 2)
                 # cv2.rectangle(

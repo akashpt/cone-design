@@ -376,7 +376,7 @@ def machine_status():
 
 # ---------------- COUNT SIGNAL ----------------
 
-checking = [0, 1, 1, 1]
+checking = [0, 1, 0, 0]
 
 def count_status():
 

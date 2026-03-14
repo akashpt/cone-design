@@ -117,7 +117,7 @@ class CameraGrabWorker(QObject):
                 except RuntimeError:
                     break
 
-        QThread.msleep(10)
+            QThread.msleep(10)
 
         if self.camera:
             self.camera.stop()
@@ -192,7 +192,7 @@ class Bridge(QObject):
          # camera thread
         self.camera_thread = None
         self.camera_worker = None
-
+        self.live_mode = "preview"
 
         # prediction thread
         self.pred_thread = None
@@ -221,7 +221,7 @@ class Bridge(QObject):
         self.count = None
         self.yarn = None
 
-       
+  #-------------------------------* SLOTS*    ----------------------------     
 
  # ==========================================
         # 🔐 PASSWORD CHECK FROM HTML
@@ -298,7 +298,7 @@ class Bridge(QObject):
     @pyqtSlot()
     def startCamera(self):
 
-        print("Inspection started")
+        print("Camera started in mode:", self.live_mode)
 
         if self.camera_thread:
             print("Camera already running")
@@ -358,7 +358,7 @@ class Bridge(QObject):
 
         # stop camera worker
         if self.camera_worker:
-           self.camera_worker.running = False
+            self.camera_worker.stop()
 
         # stop camera thread
         if self.camera_thread:
@@ -393,11 +393,44 @@ class Bridge(QObject):
 
         print("Camera stopped")
 
-    @pyqtSlot(str,str)
+
+
+    @pyqtSlot(str, str)
     def setPredictionSettings(self, green, threshold):
 
-        self.predictor.green = int(green) if green else None
-        self.predictor.threshold = int(threshold) if threshold else None
+        try:
+
+            self.predictor.green_margin = int(green) if green else None
+            self.predictor.threshold_margin = int(threshold) if threshold else None
+
+            print(
+                "Prediction settings updated:",
+                "Green =", self.predictor.green_margin,
+                "Threshold =", self.predictor.threshold_margin
+            )
+
+        except Exception as e:
+            print("Prediction settings error:", e)
+
+    @pyqtSlot()
+    def startLiveView(self):
+
+        print("Live view started")
+
+        self.live_mode = "preview"
+
+        self.stopCamera()
+        self.startCamera()
+
+    @pyqtSlot()
+    def startInspection(self):
+
+        print("Inspection started")
+
+        self.live_mode = "inspection"
+
+        self.stopCamera()
+        self.startCamera()
             
     @pyqtSlot()
     def startTraining(self):
@@ -416,8 +449,9 @@ class Bridge(QObject):
 
         print("Training capture started")
 
-        self.training_active = True
+        self.live_mode = "training"
 
+        self.stopCamera()
         self.startCamera()
 
    
@@ -432,15 +466,19 @@ class Bridge(QObject):
         self.count = settings_data["count"]
         self.yarn = settings_data["yarn"]
 
-        self.training_active = True
         self.last_count_signal = 0
 
-        # run static training first
+        # STEP 1 → run static training
         self.run_static_training()
 
-        # now enable PLC training
-        self.training_active = True
+        # STEP 2 → switch to TRAINING MODE
+        self.live_mode = "training"
+
+        # STEP 3 → start camera
+        self.stopCamera()
         self.startCamera()
+
+       
 #--------------------------------------------
             
     @pyqtSlot(str, str, str)
@@ -574,9 +612,8 @@ class Bridge(QObject):
 
             print("Training result:", result)
 
-            # QThread.msleep(800)   # small delay
-            time.sleep(0.8)
-
+            QThread.msleep(200)   # small delay
+           
 
     @pyqtSlot(str)
     def deleteTrainedModel(self, model_name):
@@ -606,6 +643,7 @@ class Bridge(QObject):
     def goHome(self):
 
         self.controller_access = False
+        self.live_mode = "preview"   # ⭐ reset mode
         self.stopCamera()
         self.app_ref.load_page("index.html")
 
@@ -615,15 +653,19 @@ class Bridge(QObject):
         self.stopCamera()
         self.app_ref.open_report_window()
 
-    # @pyqtSlot()
-    # def goTraining(self):
-    #     self.controller_access = False
-    #     self.stopCamera()
-    #     self.app_ref.load_page("training.html")
+   
     @pyqtSlot()
     def goTraining(self):
+
+        if self.live_mode == "inspection" and self.camera_running():
+            print("⚠ Stop inspection before opening Training page")
+
+            self.frame_signal.emit("STOP_CAMERA_FIRST")
+            return
+        
         print("training page")
         self.controller_access = False
+        self.live_mode = "preview"   # ⭐ reset mode
         self.stopCamera()
 
         self.app_ref.load_page("training.html")
@@ -634,19 +676,32 @@ class Bridge(QObject):
     @controller_access_required
     def goController(self):
 
+        if self.live_mode == "inspection" and self.camera_running():
+            print("⚠ Stop inspection before opening Training page")
+
+            self.frame_signal.emit("STOP_CAMERA_FIRST")
+            return
+              
+
         print(">>> goController SLOT CALLED")
 
         self.stopCamera()
         self.app_ref.load_page("controller.html")
 
 
-#----------------------------------------------------------
+#-------------------          * FUNCTION *     ---------------------------------------
     def on_new_frame(self, frame):
 
         signal = count_status()
 
-        # -------- INSPECTION MODE --------
-        if not self.training_active:
+        if self.live_mode == "preview":
+
+            # ONLY SHOW CAMERA
+            _, buffer = cv2.imencode(".jpg", frame)
+            jpg = base64.b64encode(buffer).decode()
+            self.frame_signal.emit(jpg)
+
+        elif self.live_mode == "inspection":
 
             _, buffer = cv2.imencode(".jpg", frame)
             jpg = base64.b64encode(buffer).decode()
@@ -659,10 +714,7 @@ class Bridge(QObject):
                 if self.model_key:
                     self.request_prediction.emit(frame, self.model_key)
 
-        # -------- TRAINING MODE --------
-       
-
-        else:
+        elif self.live_mode == "training":
 
             if signal == 1 and self.last_count_signal == 0:
 
@@ -673,25 +725,28 @@ class Bridge(QObject):
                 yarn = self.yarn
 
                 if material and count and yarn:
-
-                    save_dir = TRAINING_IMAGES_DIR / material / count / yarn
-                    save_dir.mkdir(parents=True, exist_ok=True)
-
-                    ts = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-
-                    save_path = save_dir / f"train_{ts}.jpg"
-
-                    cv2.imwrite(str(save_path), frame)
-
-                    model_key = f"{material}_{count}_{yarn}"
-
-                    # show captured frame in UI
+                # show only captured frame
                     _, buffer = cv2.imencode(".jpg", frame)
                     jpg = base64.b64encode(buffer).decode()
                     self.frame_signal.emit(jpg)
 
+                    # save image
+                    save_dir = TRAINING_IMAGES_DIR / material / count / yarn
+                    save_dir.mkdir(parents=True, exist_ok=True)
+
+                    ts = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+                    save_path = save_dir / f"train_{ts}.jpg"
+
+                    cv2.imwrite(str(save_path), frame)
+
+                    print("Training image saved:", save_path)
+
                     # run training
+                    model_key = f"{material}_{count}_{yarn}"
                     self.request_training.emit(frame, model_key)
+
+                    # IMPORTANT: prevent multiple triggers
+                    QThread.msleep(150)
 
         self.last_count_signal = signal
    
@@ -787,3 +842,5 @@ class Bridge(QObject):
         else:
             self.exposure_value = 5000 
   
+    def camera_running(self):
+        return self.camera_thread is not None

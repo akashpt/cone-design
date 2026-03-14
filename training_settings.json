@@ -1,6 +1,6 @@
 {
     "material": "viscose",
-    "count": "30s",
-    "yarn": "9-1",
-    "model": "viscose_30s_9-1"
+    "count": "60s",
+    "yarn": "6-1",
+    "model": "viscose_60s_6-1"
 }

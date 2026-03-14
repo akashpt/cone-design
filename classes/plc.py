@@ -422,6 +422,9 @@ def mode_status():
 
 def write_register(address, value):
 
+    if not client.connected:
+        return False
+
     try:
         resp = client.write_register(address, value)
 
@@ -433,7 +436,6 @@ def write_register(address, value):
     except Exception as e:
         print("PLC write error:", e)
         return False
-
 
 # ---------------- GRIPPER CONTROL ----------------
 

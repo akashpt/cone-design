@@ -407,7 +407,37 @@ function loadTrainedModels(){
     });
 
 }
+function updateAllCopsStatuses(statusArray) {
 
+    const statuses = document.querySelectorAll('.coneStatus');
+
+    statusArray.forEach((text, index) => {
+
+        if(index >= statuses.length) return;
+
+        const el = statuses[index];
+        const value = (text ?? "").trim();
+
+        if(value){
+            el.textContent = value;
+
+            if(value === "DEFECT"){
+                el.style.background = "#ef4444";
+            }
+            else if(value === "GOOD"){
+                el.style.background = "#22c55e";
+            }
+            else{
+                el.style.background = "#9ca3af";
+            }
+
+        }else{
+            el.textContent = "—";
+            el.style.background = "#9ca3af";
+        }
+
+    });
+}
 
 
     window.addEventListener("load", () => {

@@ -117,7 +117,7 @@ class CameraGrabWorker(QObject):
                 except RuntimeError:
                     break
 
-            QThread.msleep(10)
+            QThread.msleep(30)
 
         if self.camera:
             self.camera.stop()
@@ -141,6 +141,7 @@ class PredictionWorker(QObject):
     @pyqtSlot(object, str)
     def run_prediction(self, frame, model_key):
 
+        print("PredictionWorker started")
         if not self.running or self.busy:
             return
 
@@ -328,14 +329,14 @@ class Bridge(QObject):
         # start prediction thread
 
         self.pred_thread = QThread()
-
         self.pred_worker = PredictionWorker(self.predictor)
 
         self.pred_worker.moveToThread(self.pred_thread)
 
+        # connect signals BEFORE starting thread
         self.request_prediction.connect(self.pred_worker.run_prediction)
-
         self.pred_worker.result_ready.connect(self.on_prediction_result)
+        self.pred_worker.status.connect(print)
 
         self.pred_thread.start()
 
@@ -701,18 +702,48 @@ class Bridge(QObject):
             jpg = base64.b64encode(buffer).decode()
             self.frame_signal.emit(jpg)
 
+        # elif self.live_mode == "inspection":
+
+            # _, buffer = cv2.imencode(".jpg", frame)
+            # jpg = base64.b64encode(buffer).decode()
+            # self.frame_signal.emit(jpg)
+
+            # if signal == 1 and self.last_count_signal == 0:
+
+            #     print("PLC trigger detected (Inspection)")
+
+            #     if self.model_key:
+            #         self.request_prediction.emit(frame, self.model_key)
+
+
         elif self.live_mode == "inspection":
 
+            # show camera frame
             _, buffer = cv2.imencode(".jpg", frame)
             jpg = base64.b64encode(buffer).decode()
             self.frame_signal.emit(jpg)
 
+            # prevent multiple prediction triggers
             if signal == 1 and self.last_count_signal == 0:
+
+                if not self.pred_worker or self.pred_worker.busy:
+                    return
 
                 print("PLC trigger detected (Inspection)")
 
                 if self.model_key:
-                    self.request_prediction.emit(frame, self.model_key)
+
+                    static_img_path = BASE_DIR / "static" / "img" / "test.bmp"
+
+                    if static_img_path.exists():
+                        test_frame = cv2.imread(str(static_img_path))
+                    else:
+                        print("Static test image not found, using camera frame")
+                        test_frame = frame
+
+                    self.request_prediction.emit(test_frame, self.model_key)
+
+           
 
         elif self.live_mode == "training":
 
@@ -819,10 +850,11 @@ class Bridge(QObject):
             # ⭐ SEND TO UI
             self.cone_status_signal.emit(statuses)
 
+            # if "DEFECT" in statuses:
+            #     plc_bits = [int(b) for b in bits]
+            #     gripper_function(plc_bits)
             if "DEFECT" in statuses:
-                plc_bits = [int(b) for b in bits]
-                gripper_function(plc_bits)
-
+                 print("PLC command skipped (test mode)")
      
             
     def load_controller_settings(self):
